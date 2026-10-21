@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control de Activos Fijos</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --text:#1d2330; --muted:#5b6475; --line:#dde1e8;
+  --accent:#1f5fae; --accent-soft:#e6eefa; --ok:#1e7a46; --ok-soft:#e3f4ea;
+  --warn:#a86500; --warn-soft:#fdf1dc; --bad:#b3261e; --bad-soft:#fbe5e3;
+  --info:#4a4f9c; --info-soft:#ebebfa;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#13161c; --panel:#1b1f27; --text:#e6e9ef; --muted:#9aa3b5; --line:#2e3441;
+    --accent:#6ea2ec; --accent-soft:#1d2a3f; --ok:#5cc58a; --ok-soft:#173023;
+    --warn:#e2a64a; --warn-soft:#352a14; --bad:#ee7b72; --bad-soft:#3a1d1b;
+    --info:#a3a7f0; --info-soft:#24264a;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 16px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:19px}
+header p{margin:2px 0 0;color:var(--muted);font-size:13px}
+nav{display:flex;gap:4px;flex-wrap:wrap;margin-top:10px}
+nav button{border:1px solid var(--line);background:var(--bg);color:var(--text);padding:6px 11px;border-radius:7px;cursor:pointer;font-size:13.5px}
+nav button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+main{max-width:1250px;margin:0 auto;padding:16px}
+section.tab{display:none}
+section.tab.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 6px;font-size:17px}
+.card h3{margin:14px 0 6px;font-size:15px}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+.kpi b{display:block;font-size:22px}
+.kpi span{color:var(--muted);font-size:12.5px}
+label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:2px}
+input,select,textarea{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);font:inherit;font-size:14px}
+textarea{min-height:60px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:10px 0}
+legend{font-weight:600;font-size:13.5px;padding:0 4px}
+.help{font-size:12px;color:var(--muted);margin-top:2px}
+button.btn{border:1px solid var(--accent);background:var(--accent);color:#fff;padding:7px 13px;border-radius:7px;cursor:pointer;font-size:14px}
+button.btn.sec{background:transparent;color:var(--accent)}
+button.btn.danger{border-color:var(--bad);background:transparent;color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--bg);font-weight:600;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11.5px;font-weight:600;margin:1px 2px 1px 0;white-space:nowrap}
+.t-ok{background:var(--ok-soft);color:var(--ok)}
+.t-warn{background:var(--warn-soft);color:var(--warn)}
+.t-bad{background:var(--bad-soft);color:var(--bad)}
+.t-info{background:var(--info-soft);color:var(--info)}
+.callout{border-left:4px solid var(--accent);background:var(--accent-soft);padding:10px 12px;border-radius:6px;margin:10px 0;font-size:14px}
+.callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+.callout.bad{border-color:var(--bad);background:var(--bad-soft)}
+details{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:8px 0;background:var(--panel)}
+details summary{cursor:pointer;font-weight:600}
+.chk{display:grid;grid-template-columns:1fr 150px;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.chk:last-child{border-bottom:0}
+.chk .t{font-weight:600}
+.chk .f{font-size:12px;color:var(--info)}
+.progress{height:10px;background:var(--line);border-radius:6px;overflow:hidden}
+.progress > div{height:100%;background:var(--ok)}
+ol.steps li{margin-bottom:6px}
+.hidden{display:none}
+@media (max-width:640px){ .chk{grid-template-columns:1fr} header{position:static} }
+@media print{
+  header nav, .noprint, button{display:none!important}
+  header{position:static}
+  section.tab{display:none!important}
+  section.tab.printme{display:block!important}
+  .card{break-inside:avoid;border-color:#999}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Control de Activos Fijos · Preparación para Visita Domiciliaria</h1>
+  <p>Registro, depreciación fiscal (LISR), conteo físico, expediente y checklist de revisión. Los datos se guardan solo en este navegador; respalde con frecuencia (pestaña «Respaldo»).</p>
+  <nav id="nav"></nav>
+</header>
+
+<main>
+
+<!-- ======================= INICIO ======================= -->
+<section class="tab" id="t-inicio">
+  <div class="grid g4" id="kpis"></div>
+  <div class="card" style="margin-top:14px">
+    <h2>¿Cómo usar esta herramienta?</h2>
+    <ol class="steps">
+      <li><b>Configuración:</b> capture razón social, RFC, ejercicio(s) en revisión y el saldo contable de activo fijo según balanza (pestaña «Configuración»).</li>
+      <li><b>Activos:</b> registre cada activo con su CFDI, fecha de adquisición, fecha de inicio de uso, MOI, ubicación y, si es importado, su pedimento.</li>
+      <li><b>INPC:</b> capture los valores del INPC publicados por el INEGI/DOF para los meses que necesite. La herramienta <u>no</u> trae valores precargados para evitar usar datos no verificados.</li>
+      <li><b>Depreciación:</b> genere la cédula de deducción fiscal del ejercicio y compárela contra lo declarado.</li>
+      <li><b>Conteo físico:</b> marque qué activos se localizaron físicamente, con fecha y observaciones.</li>
+      <li><b>Alertas:</b> revise los hallazgos automáticos (faltantes documentales, riesgos) y corríjalos antes de la visita.</li>
+      <li><b>Visita domiciliaria:</b> recorra el checklist (antes, durante, después) y lea la guía explicativa.</li>
+    </ol>
+    <div class="callout warn"><b>Alcance y límites.</b> Es una herramienta de apoyo para organizar información y detectar riesgos. Las tasas, topes y fundamentos incluidos están marcados con la leyenda <span class="tag t-warn">verificar vigencia</span> y deben contrastarse contra el texto vigente publicado en el DOF para el ejercicio revisado. No sustituye la opinión de su contador, abogado o asesor fiscal, ni la estrategia de defensa ante la autoridad.</div>
+  </div>
+  <div class="card">
+    <h2>Riesgos prioritarios detectados</h2>
+    <div id="top-alertas"></div>
+  </div>
+</section>
+
+<!-- ======================= CONFIG ======================= -->
+<section class="tab" id="t-config">
+  <div class="card">
+    <h2>Datos del contribuyente y de la revisión</h2>
+    <div class="form">
+      <div><label>Razón social</label><input id="c-razon"></div>
+      <div><label>RFC</label><input id="c-rfc" maxlength="13"></div>
+      <div><label>Ejercicio(s) revisado(s)</label><input id="c-ejercicios" placeholder="p. ej. 2024"><div class="help">Lo indica la orden de visita.</div></div>
+      <div><label>Número de oficio / orden de visita</label><input id="c-orden"></div>
+      <div><label>Fecha de notificación de la orden</label><input type="date" id="c-fnotif"></div>
+      <div><label>Fecha de la última acta parcial (si ya existe)</label><input type="date" id="c-fultima"></div>
+      <div><label>Representante legal</label><input id="c-rep"></div>
+      <div><label>Responsable interno de activos fijos</label><input id="c-resp"></div>
+      <div><label>¿Cuenta con programa IMMEX?</label><select id="c-immex"><option value="no">No</option><option value="si">Sí</option></select></div>
+      <div><label>Saldo contable de activo fijo (MOI) según balanza</label><input type="number" step="0.01" id="c-saldo"><div class="help">Para conciliar contra el registro auxiliar.</div></div>
+      <div><label>Fecha de la balanza usada</label><input type="date" id="c-fsaldo"></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn" onclick="guardarConfig()">Guardar</button><span id="c-msg" class="muted small"></span></div>
+  </div>
+  <div class="card">
+    <h2>Topes de deducción de automóviles</h2>
+    <p class="muted small">Art. 36, fr. II LISR. Montos incluidos como referencia; <span class="tag t-warn">verificar vigencia</span> para el ejercicio revisado y edítelos si cambiaron.</p>
+    <div class="form">
+      <div><label>Tope automóviles (combustión)</label><input type="number" id="c-tope" step="0.01"></div>
+      <div><label>Tope automóviles eléctricos / híbridos</label><input type="number" id="c-topeel" step="0.01"></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn" onclick="guardarConfig()">Guardar</button></div>
+  </div>
+</section>
+
+<!-- ======================= ACTIVOS ======================= -->
+<section class="tab" id="t-activos">
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <h2 id="f-titulo">Registrar activo</h2>
+      <div class="row"><button class="btn sec" onclick="limpiarForm()">Nuevo / limpiar</button></div>
+    </div>
+    <input type="hidden" id="a-id">
+    <fieldset><legend>1. Identificación</legend>
+      <div class="form">
+        <div><label>No. de activo / etiqueta *</label><input id="a-numero"><div class="help">El número que está físicamente pegado en el bien. Debe coincidir con el registro.</div></div>
+        <div style="grid-column:span 2"><label>Descripción *</label><input id="a-descripcion"></div>
+        <div><label>Categoría fiscal *</label><select id="a-categoria" onchange="onCategoria()"></select><div class="help" id="a-cat-help"></div></div>
+        <div><label>Tasa de depreciación fiscal (%)</label><input type="number" step="0.01" id="a-tasa"><div class="help">Se sugiere según categoría; ajústela si su actividad tiene una tasa específica (art. 35 LISR).</div></div>
+        <div><label>¿Automóvil eléctrico/híbrido?</label><select id="a-electrico"><option value="no">No</option><option value="si">Sí</option></select></div>
+        <div><label>Marca</label><input id="a-marca"></div>
+        <div><label>Modelo</label><input id="a-modelo"></div>
+        <div><label>No. de serie</label><input id="a-serie"></div>
+      </div>
+    </fieldset>
+    <fieldset><legend>2. Adquisición y comprobación fiscal</legend>
+      <div class="form">
+        <div><label>Fecha de adquisición *</label><input type="date" id="a-fadq"><div class="help">Fecha del CFDI / transmisión de propiedad. Se usa para el factor de actualización.</div></div>
+        <div><label>Fecha de inicio de uso *</label><input type="date" id="a-fuso"><div class="help">Cuándo empezó a usarse para generar ingresos (art. 31 LISR). Conserve evidencia (acta de instalación, puesta en marcha).</div></div>
+        <div><label>¿Diferir el inicio de la deducción al ejercicio siguiente?</label><select id="a-diferir"><option value="no">No</option><option value="si">Sí</option></select><div class="help">Art. 31 LISR permite iniciar en el ejercicio de inicio de uso o en el siguiente.</div></div>
+        <div><label>Monto original de la inversión (MOI) *</label><input type="number" step="0.01" id="a-moi"><div class="help">Precio + impuestos no acreditables, fletes, seguros, derechos, IGI/DTA, instalación. Sin IVA acreditable.</div></div>
+        <div><label>IVA acreditado</label><input type="number" step="0.01" id="a-iva"></div>
+        <div><label>UUID del CFDI</label><input id="a-uuid" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
+        <div><label>Proveedor</label><input id="a-proveedor"></div>
+        <div><label>RFC proveedor</label><input id="a-rfcprov"></div>
+        <div><label>Forma de pago</label><select id="a-fpago"><option value="">—</option><option>Transferencia</option><option>Cheque nominativo</option><option>Tarjeta</option><option>Efectivo</option><option>Arrendamiento financiero</option><option>Compensación / otro</option></select></div>
+        <div><label>Cuenta contable</label><input id="a-cuenta"></div>
+        <div><label>Póliza contable de alta</label><input id="a-poliza"></div>
+      </div>
+    </fieldset>
+    <fieldset><legend>3. Origen y comercio exterior</legend>
+      <div class="form">
+        <div><label>Origen del activo</label><select id="a-origen" onchange="onOrigen()"><option value="nacional">Adquisición nacional</option><option value="import_def">Importación definitiva</option><option value="import_temp">Importación temporal IMMEX (art. 108 fr. III LA)</option></select></div>
+        <div class="ce"><label>No. de pedimento</label><input id="a-pedimento" placeholder="AA  ADUA  PATENTE  NÚMERO"></div>
+        <div class="ce"><label>Fecha de pago del pedimento</label><input type="date" id="a-fped"></div>
+        <div class="ce"><label>Fracción arancelaria / NICO declarada</label><input id="a-fraccion"></div>
+        <div class="ce temp"><label>¿Registrado en Anexo 24 (módulo activo fijo)?</label><select id="a-a24"><option value="">—</option><option value="si">Sí</option><option value="no">No</option></select></div>
+        <div class="ce temp"><label>¿Ubicado en domicilio registrado en el programa IMMEX?</label><select id="a-domimmex"><option value="">—</option><option value="si">Sí</option><option value="no">No</option></select></div>
+      </div>
+      <div class="help ce">El pedimento ampara la legal estancia del bien en el país; si es importación temporal, el activo debe permanecer bajo control del programa y en los domicilios registrados.</div>
+    </fieldset>
+    <fieldset><legend>4. Ubicación y resguardo</legend>
+      <div class="form">
+        <div><label>Ubicación física (planta / área)</label><input id="a-ubicacion"></div>
+        <div><label>Domicilio (si distinto al fiscal)</label><input id="a-domicilio"><div class="help">Verifique que sucursales y bodegas estén registradas en el RFC.</div></div>
+        <div><label>Responsable / resguardante</label><input id="a-responsable"></div>
+        <div><label>Centro de costo</label><input id="a-cc"></div>
+        <div><label>Situación de posesión</label><select id="a-posesion"><option value="propio">En posesión propia</option><option value="comodato">En comodato a tercero</option><option value="reparacion">En reparación con tercero</option><option value="arrendado">Arrendado a tercero</option></select></div>
+      </div>
+    </fieldset>
+    <fieldset><legend>5. Expediente documental (marque lo que SÍ tiene)</legend>
+      <div class="form" id="a-docs"></div>
+    </fieldset>
+    <fieldset><legend>6. Baja (si aplica)</legend>
+      <div class="form">
+        <div><label>Estatus</label><select id="a-estatus"><option value="activo">Activo</option><option value="baja">Dado de baja</option></select></div>
+        <div><label>Fecha de baja</label><input type="date" id="a-fbaja"></div>
+        <div><label>Motivo de baja</label><select id="a-motivo"><option value="">—</option><option value="venta">Venta / enajenación</option><option value="inutil">Dejó de ser útil para obtener ingresos</option><option value="siniestro">Siniestro / robo / caso fortuito</option><option value="destruccion">Destrucción</option><option value="retorno">Retorno al extranjero (IMMEX)</option><option value="otro">Otro</option></select></div>
+        <div><label>Precio de venta (si aplica)</label><input type="number" step="0.01" id="a-pventa"></div>
+        <div style="grid-column:1/-1"><label>Evidencia de la baja</label><input id="a-evbaja" placeholder="CFDI de venta, acta de destrucción, denuncia, reclamación a aseguradora, pedimento de retorno…"></div>
+      </div>
+    </fieldset>
+    <div><label>Notas</label><textarea id="a-notas"></textarea></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" onclick="guardarActivo()">Guardar activo</button>
+      <span id="a-msg" class="small"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <h2>Registro auxiliar de activos fijos</h2>
+      <div class="row noprint">
+        <input id="buscar" placeholder="Buscar…" oninput="renderActivos()" style="width:200px">
+        <select id="filtro" onchange="renderActivos()" style="width:auto"><option value="">Todos</option><option value="activo">Activos</option><option value="baja">Bajas</option><option value="alertas">Con alertas</option></select>
+        <button class="btn sec" onclick="exportCSV()">Exportar CSV</button>
+      </div>
+    </div>
+    <div class="tablewrap" style="margin-top:10px"><table id="tbl-activos"></table></div>
+    <p class="muted small" id="concilia"></p>
+  </div>
+</section>
+
+<!-- ======================= INPC ======================= -->
+<section class="tab" id="t-inpc">
+  <div class="card">
+    <h2>Índice Nacional de Precios al Consumidor (INPC)</h2>
+    <p>La deducción fiscal se actualiza con el factor: <b>INPC del último mes de la primera mitad del periodo de uso en el ejercicio ÷ INPC del mes de adquisición</b> (art. 31 LISR, art. 17-A CFF).</p>
+    <div class="callout warn">Capture los valores <b>oficiales</b> publicados por el INEGI (y en el DOF). Use siempre la misma base del índice para todos los meses. La herramienta indica qué meses le faltan.</div>
+    <div class="form">
+      <div><label>Mes</label><input type="month" id="i-mes"></div>
+      <div><label>Valor INPC</label><input type="number" step="0.001" id="i-valor"></div>
+      <div style="align-self:end"><button class="btn" onclick="guardarINPC()">Agregar / actualizar</button></div>
+    </div>
+    <details><summary>Carga masiva (pegar desde Excel)</summary>
+      <p class="small muted">Una línea por mes: <code>AAAA-MM valor</code> (separado por tabulador, espacio, coma o punto y coma). Ej.: <code>2024-06 134.594</code></p>
+      <textarea id="i-masivo" style="min-height:120px"></textarea>
+      <button class="btn sec" onclick="cargaMasivaINPC()">Cargar</button> <span id="i-msg" class="small"></span>
+    </details>
+    <h3>Meses requeridos que faltan</h3>
+    <div id="inpc-faltantes" class="small"></div>
+    <h3>Valores capturados</h3>
+    <div class="tablewrap"><table id="tbl-inpc"></table></div>
+  </div>
+</section>
+
+<!-- ======================= DEPRECIACIÓN ======================= -->
+<section class="tab" id="t-dep">
+  <div class="card">
+    <h2>Cédula de deducción de inversiones (ISR)</h2>
+    <div class="row">
+      <div><label>Ejercicio</label><input type="number" id="d-ej" style="width:110px"></div>
+      <div style="align-self:end"><button class="btn" onclick="renderDep()">Calcular</button></div>
+      <div style="align-self:end"><button class="btn sec" onclick="exportDepCSV()">Exportar CSV</button></div>
+      <div style="align-self:end"><button class="btn sec" onclick="imprimir('t-dep')">Imprimir</button></div>
+    </div>
+    <details><summary>¿Cómo se calcula? (explicación paso a paso)</summary>
+      <ol class="steps small">
+        <li><b>Base deducible</b> = MOI. Para automóviles se limita al tope del art. 36 fr. II LISR.</li>
+        <li><b>Deducción anual histórica</b> = Base × tasa (arts. 34 y 35 LISR).</li>
+        <li><b>Proporción por meses completos</b>: si el bien empezó a usarse o dejó de usarse durante el ejercicio, se deduce en proporción a los meses completos de uso (art. 31 LISR). Criterio de la herramienta: si el inicio de uso no es día 1, el primer mes completo es el siguiente; en la baja, el último mes completo es el anterior al de la baja.</li>
+        <li><b>Límite</b>: la suma de deducciones nunca supera el MOI (base). Se resta lo deducido en ejercicios anteriores.</li>
+        <li><b>Factor de actualización</b> = INPC del último mes de la primera mitad del periodo de uso en el ejercicio ÷ INPC del mes de adquisición. Se calcula hasta el diezmilésimo; si resulta menor a 1, se usa 1 (art. 17-A CFF). Si el periodo de uso tiene número impar de meses, la herramienta toma como último mes de la primera mitad el inmediato anterior a la mitad (criterio de cálculo: <span class="tag t-warn">validar con su asesor</span>).</li>
+        <li><b>Deducción actualizada</b> = deducción histórica del ejercicio × factor.</li>
+        <li><b>Bien que deja de ser útil</b>: se deduce en ese ejercicio la parte no deducida, manteniendo un peso en registros (art. 31 LISR). Verifique además los avisos o requisitos reglamentarios aplicables.</li>
+      </ol>
+    </details>
+    <div id="dep-alert"></div>
+    <div class="tablewrap" style="margin-top:10px"><table id="tbl-dep"></table></div>
+    <div class="grid g2" style="margin-top:12px">
+      <div><label>Deducción de inversiones declarada en la anual del ejercicio (para comparar)</label><input type="number" step="0.01" id="d-declarada" oninput="compararDeclarada()"></div>
+      <div id="d-dif" style="align-self:end"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= CONTEO FÍSICO ======================= -->
+<section class="tab" id="t-conteo">
+  <div class="card">
+    <h2>Inventario físico de activos</h2>
+    <p>En una visita domiciliaria los visitadores pueden recorrer las instalaciones y pedir que se muestre físicamente un activo registrado (o preguntar por un bien que ven y no está registrado). Haga su propio conteo antes.</p>
+    <ol class="steps small">
+      <li>Imprima esta lista por ubicación y asigne un equipo (contabilidad + responsable de área).</li>
+      <li>Localice cada bien, confirme etiqueta, número de serie y estado. Tome fotografía con fecha.</li>
+      <li>Registre bienes encontrados que <b>no</b> están en el registro (sobrantes) en la sección inferior.</li>
+      <li>Firme un acta interna de inventario con fecha, participantes y resultados.</li>
+    </ol>
+    <div class="row noprint">
+      <div><label>Fecha del conteo</label><input type="date" id="k-fecha"></div>
+      <div><label>Filtrar por ubicación</label><select id="k-ubic" onchange="renderConteo()"></select></div>
+      <div style="align-self:end"><button class="btn sec" onclick="imprimir('t-conteo')">Imprimir hoja de conteo</button></div>
+    </div>
+    <div class="progress" style="margin-top:10px"><div id="k-bar"></div></div>
+    <p class="small muted" id="k-res"></p>
+    <div class="tablewrap"><table id="tbl-conteo"></table></div>
+  </div>
+  <div class="card">
+    <h2>Bienes encontrados no registrados (sobrantes)</h2>
+    <div class="form">
+      <div><label>Descripción</label><input id="s-desc"></div>
+      <div><label>Ubicación</label><input id="s-ubic"></div>
+      <div><label>Observación (¿de quién es?, ¿gasto?, ¿comodato?)</label><input id="s-obs"></div>
+      <div style="align-self:end"><button class="btn" onclick="agregarSobrante()">Agregar</button></div>
+    </div>
+    <div class="tablewrap" style="margin-top:10px"><table id="tbl-sobrantes"></table></div>
+  </div>
+</section>
+
+<!-- ======================= ALERTAS ======================= -->
+<section class="tab" id="t-alertas">
+  <div class="card">
+    <h2>Alertas de cumplimiento por activo</h2>
+    <p class="muted">Hallazgos automáticos a partir de lo capturado. Una alerta no implica que exista una infracción: indica un punto que el visitador podría cuestionar y que conviene documentar o corregir.</p>
+    <div class="grid g4" id="al-resumen"></div>
+    <div class="tablewrap" style="margin-top:12px"><table id="tbl-alertas"></table></div>
+  </div>
+</section>
+
+<!-- ======================= VISITA ======================= -->
+<section class="tab" id="t-visita">
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <h2>Checklist de visita domiciliaria – enfoque activos fijos</h2>
+      <button class="btn sec noprint" onclick="imprimir('t-visita')">Imprimir</button>
+    </div>
+    <div class="progress"><div id="v-bar"></div></div>
+    <p class="small muted" id="v-res"></p>
+    <div id="v-plazos"></div>
+    <div id="v-lista"></div>
+  </div>
+</section>
+
+<!-- ======================= GUÍA ======================= -->
+<section class="tab" id="t-guia">
+  <div class="card">
+    <h2>Guía explicativa</h2>
+    <p class="muted">Fundamentos citados como referencia general. <span class="tag t-warn">Verificar vigencia</span> de cada disposición contra el texto publicado en el DOF aplicable al ejercicio revisado.</p>
+
+    <details open><summary>1. ¿Qué es una visita domiciliaria y qué buscan en activos fijos?</summary>
+      <p>Es una facultad de comprobación de la autoridad fiscal (art. 42, fr. III CFF) en la que los visitadores acuden al domicilio del contribuyente para revisar su contabilidad, bienes y mercancías. Su desarrollo se regula en los arts. 43 a 46-A CFF. En materia de comercio exterior, la autoridad también puede revisar la legal estancia de mercancías de procedencia extranjera (Ley Aduanera, arts. 144 y 146, entre otros).</p>
+      <p>En activos fijos, típicamente revisan:</p>
+      <ul>
+        <li><b>Existencia física:</b> que los bienes deducidos existan, estén en el domicilio y se usen en la actividad (materialidad).</li>
+        <li><b>Comprobación:</b> CFDI vigente a nombre del contribuyente, forma de pago, registro contable.</li>
+        <li><b>Cálculo de la deducción:</b> tasa correcta, fecha de inicio, proporción de meses, actualización con INPC, topes (automóviles).</li>
+        <li><b>IVA acreditado</b> en la adquisición y su soporte.</li>
+        <li><b>Bajas:</b> ventas (ingreso por ganancia, art. 18 fr. IV LISR, e IVA trasladado), destrucciones, robos.</li>
+        <li><b>Activos importados:</b> pedimento que acredite legal estancia; si es temporal IMMEX, control en Anexo 24 y permanencia en domicilios autorizados.</li>
+      </ul>
+    </details>
+
+    <details><summary>2. Conceptos clave: MOI, depreciación contable vs. fiscal</summary>
+      <ul>
+        <li><b>MOI (monto original de la inversión):</b> precio del bien más impuestos efectivamente pagados (excepto IVA acreditable), derechos, cuotas compensatorias, fletes, transportes, seguros contra riesgos en la transportación, manejo, comisiones sobre compras y honorarios a agentes aduanales (art. 31 LISR). En importaciones incluye IGI y DTA.</li>
+        <li><b>Depreciación contable:</b> la determina la empresa conforme a NIF (vida útil estimada). Se registra en libros.</li>
+        <li><b>Depreciación fiscal (deducción de inversiones):</b> se calcula con tasas máximas de ley (arts. 33 a 35 LISR) y se actualiza con INPC. Genera una partida de conciliación contable-fiscal.</li>
+        <li><b>Las diferencias son normales</b>, pero deben estar explicadas en la conciliación y en papeles de trabajo.</li>
+      </ul>
+    </details>
+
+    <details><summary>3. Tasas de deducción de referencia (art. 34 y 35 LISR)</summary>
+      <div class="tablewrap"><table id="tbl-tasas"></table></div>
+      <p class="small muted">Para maquinaria y equipo, el art. 35 LISR establece tasas según la actividad en que se usen. Confirme la fracción aplicable a su giro y capture la tasa en el activo.</p>
+    </details>
+
+    <details><summary>4. Etapas de la visita y plazos</summary>
+      <ol class="steps">
+        <li><b>Notificación de la orden de visita</b> (art. 43 y 44 CFF). Verifique que la orden señale el lugar, el nombre de los visitadores, el ejercicio y las contribuciones a revisar, y que esté firmada. Si no está el representante, se deja citatorio.</li>
+        <li><b>Acta de inicio.</b> Se designan dos testigos; si el contribuyente no los designa, los designan los visitadores. Revise que el visitador se identifique.</li>
+        <li><b>Desarrollo.</b> Requerimientos de información, recorrido físico, revisión de libros y documentos (art. 45 CFF obliga a permitir el acceso y mantener a disposición la contabilidad). Pueden levantarse <b>actas parciales</b> con hechos u omisiones.</li>
+        <li><b>Última acta parcial.</b> A partir de ella, el contribuyente tiene <b>20 días</b> (hábiles) para presentar documentos, libros o registros que desvirtúen los hechos u omisiones (art. 46 fr. IV CFF), con posibilidad de ampliación cuando se revise más de un ejercicio.</li>
+        <li><b>Acta final.</b> Cierra la visita. La autoridad tiene plazo para concluir la visita (art. 46-A CFF) y, en su caso, para emitir la resolución con el crédito fiscal (art. 50 CFF).</li>
+      </ol>
+      <div class="callout">La herramienta calcula referencias de fecha en la pestaña «Visita». Los días hábiles dependen del calendario oficial y de días inhábiles que la autoridad publique: confirme cada vencimiento con su asesor.</div>
+    </details>
+
+    <details><summary>5. Derechos del contribuyente durante la visita</summary>
+      <ul>
+        <li>Ser informado al inicio de la visita de sus derechos (la autoridad entrega la Carta de los Derechos del Contribuyente).</li>
+        <li>Conocer el estado de la revisión y a ser informado de los hechos u omisiones detectados (art. 42 penúltimo párrafo CFF).</li>
+        <li>Presentar pruebas y alegatos durante la visita y en el plazo posterior a la última acta parcial.</li>
+        <li>Corregir su situación fiscal (autocorrección, art. 76 CFF y demás aplicables) con reducción de multas, según la etapa.</li>
+        <li>Solicitar la adopción de un <b>acuerdo conclusivo</b> ante PRODECON (art. 69-C CFF) respecto de hechos u omisiones con los que no esté de acuerdo.</li>
+        <li>Recibir copia de las actas que se levanten.</li>
+      </ul>
+    </details>
+
+    <details><summary>6. Errores frecuentes que generan observaciones en activos fijos</summary>
+      <ul>
+        <li>Deducir desde la fecha de compra y no desde el <b>inicio de uso</b> (o sin evidencia de cuándo empezó a usarse).</li>
+        <li>Usar tasas contables en lugar de las fiscales, o aplicar art. 34 cuando correspondía art. 35.</li>
+        <li>Deducir automóviles por encima del tope.</li>
+        <li>CFDI cancelado, a nombre de otro RFC, o pago en efectivo superior al límite (art. 27 fr. III LISR).</li>
+        <li>Activos registrados que <b>no existen físicamente</b> (robados, chatarrizados, vendidos sin dar de baja) → deducción improcedente y posible omisión de ingresos por venta.</li>
+        <li>Bienes vendidos sin CFDI ni reconocimiento de ganancia/pérdida.</li>
+        <li>Activos de importación temporal sin control en Anexo 24, fuera de domicilio registrado o vendidos en territorio nacional sin cambio de régimen.</li>
+        <li>Activos importados definitivamente sin pedimento localizable (riesgo de cuestionamiento de legal estancia).</li>
+        <li>Mejoras o reparaciones capitalizables deducidas como gasto, o viceversa.</li>
+        <li>Diferencia sin explicar entre registro auxiliar y balanza.</li>
+      </ul>
+    </details>
+
+    <details><summary>7. Activos fijos e IMMEX / comercio exterior</summary>
+      <ul>
+        <li><b>Importación temporal de activo fijo</b> (art. 108 fr. III LA): puede permanecer mientras esté vigente el programa IMMEX. Debe estar en domicilios registrados y controlado en el sistema de control de inventarios (Anexo 24 RGCE).</li>
+        <li><b>Destino final:</b> retorno, cambio de régimen a definitivo, transferencia, o destrucción conforme al procedimiento aplicable. Venderlo en México sin regularizar puede generar contribuciones omitidas, multas y medidas sobre la mercancía.</li>
+        <li><b>Crédito fiscal IVA/IEPS:</b> si tiene certificación IVA-IEPS, los activos temporales impactan el control del Anexo 30.</li>
+        <li><b>Fiscal:</b> el activo temporal IMMEX propiedad del residente en el extranjero (no del contribuyente) normalmente no es deducible para la maquiladora; identifique quién es el propietario y cómo se refleja.</li>
+      </ul>
+      <p class="small muted">Para este tema conviene una revisión específica con el responsable de comercio exterior (Anexo 24, pedimentos y vigencia del programa).</p>
+    </details>
+
+    <details><summary>8. Recomendaciones prácticas para el día de la visita</summary>
+      <ul>
+        <li>Designe <b>un solo enlace</b> con los visitadores y un respaldo. Todo requerimiento se recibe por escrito.</li>
+        <li>Lleve una <b>bitácora</b>: qué se pidió, qué se entregó, fecha, folios. Entregue copias, no originales, y obtenga acuse.</li>
+        <li>Para el recorrido, prepare un plano con ubicaciones y tenga a mano el registro por área.</li>
+        <li>No haga interpretaciones verbales ni reconozca hechos sin revisar: «se revisará y se dará respuesta por escrito».</li>
+        <li>Lea completas las actas antes de firmar. Si hay inexactitudes, pida que se asiente su manifestación. Firmar el acta no implica aceptar su contenido.</li>
+        <li>Conserve fotografías fechadas de los activos y del recorrido.</li>
+      </ul>
+    </details>
+  </div>
+</section>
+
+<!-- ======================= RESPALDO ======================= -->
+<section class="tab" id="t-respaldo">
+  <div class="card">
+    <h2>Respaldo y restauración</h2>
+    <p>La información vive solo en este navegador. Descargue un respaldo después de cada sesión de trabajo y guárdelo en un lugar seguro (contiene datos fiscales).</p>
+    <div class="row">
+      <button class="btn" onclick="descargarRespaldo()">Descargar respaldo (JSON)</button>
+      <label class="btn sec" style="display:inline-block;margin:0;color:var(--accent)">Restaurar respaldo<input type="file" accept=".json" onchange="restaurar(event)" class="hidden"></label>
+      <button class="btn sec" onclick="cargarEjemplo()">Cargar datos de ejemplo</button>
+      <button class="btn danger" onclick="borrarTodo()">Borrar todo</button>
+    </div>
+    <p class="small muted">Los datos de ejemplo son ficticios y solo sirven para conocer la herramienta.</p>
+    <h3>Importar activos desde CSV</h3>
+    <p class="small muted">Use el mismo formato que «Exportar CSV» (primera fila con encabezados). Recomendado: exporte primero un CSV de ejemplo, llénelo en Excel y vuelva a importarlo.</p>
+    <input type="file" accept=".csv" onchange="importarCSV(event)">
+    <span id="r-msg" class="small"></span>
+  </div>
+</section>
+
+</main>
+
+<script>
+/* ===================== Catálogos ===================== */
+const CATEGORIAS = [
+  {k:'construccion', n:'Construcciones', t:5, f:'Art. 34 fr. I LISR'},
+  {k:'mobiliario', n:'Mobiliario y equipo de oficina', t:10, f:'Art. 34 fr. III LISR'},
+  {k:'computo', n:'Equipo de cómputo (PC, laptops, servidores, impresoras, etc.)', t:30, f:'Art. 34 fr. VII LISR'},
+  {k:'automovil', n:'Automóviles', t:25, f:'Art. 34 fr. VI LISR; tope art. 36 fr. II', tope:true},
+  {k:'transporte', n:'Autobuses, camiones de carga, tractocamiones, montacargas y remolques', t:25, f:'Art. 34 fr. VI LISR'},
+  {k:'herramental', n:'Dados, troqueles, moldes, matrices y herramental', t:35, f:'Art. 34 fr. VIII LISR'},
+  {k:'embarcaciones', n:'Embarcaciones', t:6, f:'Art. 34 fr. IV LISR'},
+  {k:'aviones', n:'Aviones (distintos de aerofumigación)', t:10, f:'Art. 34 fr. V LISR'},
+  {k:'renovable', n:'Maquinaria y equipo para generación de energía de fuentes renovables', t:100, f:'Art. 34 LISR (verificar fracción y requisitos)'},
+  {k:'maquinaria', n:'Maquinaria y equipo (según actividad)', t:10, f:'Art. 35 LISR – capture la tasa de su actividad'},
+  {k:'terreno', n:'Terrenos (no depreciables)', t:0, f:'Los terrenos no son objeto de deducción por inversiones'},
+  {k:'otro', n:'Otro (capture tasa y fundamento en notas)', t:0, f:'Capture la tasa aplicable'}
+];
+const DOCS = [
+  {k:'cfdi', n:'CFDI de adquisición (XML y PDF)'},
+  {k:'cfdivig', n:'CFDI validado como vigente en el SAT'},
+  {k:'pago', n:'Comprobante de pago / estado de cuenta'},
+  {k:'poliza', n:'Póliza contable de alta'},
+  {k:'contrato', n:'Contrato / orden de compra'},
+  {k:'inicio', n:'Evidencia de inicio de uso (acta de instalación)'},
+  {k:'resguardo', n:'Resguardo firmado'},
+  {k:'foto', n:'Fotografía fechada'},
+  {k:'etiqueta', n:'Etiqueta física colocada'},
+  {k:'pedimento', n:'Pedimento y anexos (si es importado)'},
+  {k:'seguro', n:'Póliza de seguro'},
+  {k:'mantenimiento', n:'Bitácora de mantenimiento / uso'}
+];
+const VISITA = [
+ {g:'A. Preparación (antes de la visita)', items:[
+  {id:'a1', t:'Registro auxiliar de activos fijos completo y actualizado', d:'Cada activo con número, descripción, fecha de adquisición, fecha de inicio de uso, MOI, tasa, deducción acumulada y ubicación.', f:'Art. 28 CFF; art. 33 RCFF (registros contables – verificar apartado)'},
+  {id:'a2', t:'Conciliación registro auxiliar vs. balanza de comprobación', d:'El total de MOI del registro debe cuadrar con las cuentas de activo fijo. Documente las partidas en conciliación.', f:'Art. 28 CFF', auto:'concilia'},
+  {id:'a3', t:'CFDI de adquisición de cada activo, a nombre del contribuyente y vigente', d:'Valide el estatus de cada UUID en el portal del SAT. Un CFDI cancelado invalida la deducción y el acreditamiento.', f:'Art. 27 fr. III y XVIII LISR; arts. 29 y 29-A CFF', auto:'cfdi'},
+  {id:'a4', t:'Forma de pago conforme a requisitos', d:'Pagos mayores al límite legal deben hacerse con transferencia, cheque nominativo, tarjeta o monedero electrónico autorizado.', f:'Art. 27 fr. III LISR', auto:'pago'},
+  {id:'a5', t:'Evidencia de la fecha de inicio de uso', d:'Actas de instalación, puesta en marcha, órdenes de trabajo. Determina desde cuándo se puede deducir.', f:'Art. 31 LISR', auto:'inicio'},
+  {id:'a6', t:'Cédula de deducción de inversiones por ejercicio revisado', d:'Con INPC oficial y factores de actualización. Compárela contra lo declarado en la anual.', f:'Arts. 31 a 36 LISR; art. 17-A CFF'},
+  {id:'a7', t:'Topes de deducción de automóviles aplicados', d:'Verifique que no se haya deducido por encima del tope ni acreditado IVA en exceso proporcional.', f:'Art. 36 fr. II LISR'},
+  {id:'a8', t:'Conteo físico reciente con acta firmada', d:'Todos los activos registrados localizados; diferencias investigadas y resueltas.', f:'Materialidad de la operación', auto:'conteo'},
+  {id:'a9', t:'Bajas documentadas', d:'Ventas con CFDI emitido e ingreso/ganancia reconocidos; destrucciones con acta y evidencia; robos con denuncia y, en su caso, reclamación al seguro.', f:'Art. 18 fr. IV y art. 31 LISR', auto:'bajas'},
+  {id:'a10', t:'Activos importados con pedimento localizable', d:'Pedimento, factura comercial y documentos de transporte. Acreditan la legal estancia del bien.', f:'Art. 146 Ley Aduanera', auto:'pedimento'},
+  {id:'a11', t:'Activos temporales IMMEX controlados', d:'Registrados en el Anexo 24, en domicilios registrados del programa y con programa vigente. Sin ventas sin cambio de régimen.', f:'Art. 108 fr. III LA; Anexo 24 RGCE; Decreto IMMEX', auto:'immex'},
+  {id:'a12', t:'Domicilios donde hay activos registrados en el RFC', d:'Sucursales, bodegas y plantas dadas de alta como establecimientos.', f:'Art. 27 CFF y su reglamento'},
+  {id:'a13', t:'Activos en poder de terceros documentados', d:'Contratos de comodato, arrendamiento o reparación, idealmente con fecha cierta.', f:'Soporte de la propiedad y del uso para generar ingresos', auto:'posesion'},
+  {id:'a14', t:'IVA acreditado en adquisiciones soportado', d:'Trasladado expresamente, efectivamente pagado y relacionado con actividades gravadas.', f:'Art. 5 LIVA'},
+  {id:'a15', t:'Poder del representante legal y personas designadas', d:'Identificaciones vigentes, poder notarial, personas que atenderán y testigos sugeridos.', f:'Art. 19 CFF; art. 44 CFF'},
+  {id:'a16', t:'Expediente digital organizado por activo', d:'Una carpeta por número de activo con CFDI, pago, póliza, pedimento, fotos, resguardo.', f:'Buenas prácticas / art. 30 CFF (conservación)'}
+ ]},
+ {g:'B. Durante la visita', items:[
+  {id:'b1', t:'Revisar la orden de visita', d:'Nombre del contribuyente, domicilio, ejercicio y contribuciones, nombres de visitadores, firma del funcionario competente.', f:'Arts. 38 y 43 CFF'},
+  {id:'b2', t:'Verificar la identificación de cada visitador', d:'Que coincida con los nombres de la orden y que se asiente en el acta.', f:'Art. 44 fr. III CFF'},
+  {id:'b3', t:'Designar testigos', d:'Personas de confianza disponibles durante el desarrollo de la visita.', f:'Art. 44 fr. III CFF'},
+  {id:'b4', t:'Recibir la Carta de los Derechos del Contribuyente', d:'Se debe entregar al inicio de la visita.', f:'Ley Federal de los Derechos del Contribuyente'},
+  {id:'b5', t:'Bitácora de requerimientos y entregas', d:'Qué pidieron, qué se entregó, fecha, folio y acuse. Entregar copias.', f:'Control interno'},
+  {id:'b6', t:'Acompañar el recorrido físico', d:'Con plano de ubicaciones y registro por área. No adivinar: si se desconoce el origen de un bien, se responde por escrito después.', f:'Art. 45 CFF'},
+  {id:'b7', t:'Leer completas las actas parciales antes de firmar', d:'Solicitar que se asienten manifestaciones del contribuyente si hay inexactitudes. Obtener copia.', f:'Art. 46 CFF'},
+  {id:'b8', t:'Identificar hechos u omisiones observados', d:'Clasificarlos por activo y preparar evidencia para desvirtuarlos.', f:'Art. 46 fr. IV CFF'}
+ ]},
+ {g:'C. Después de la última acta parcial', items:[
+  {id:'c1', t:'Calcular el plazo para desvirtuar', d:'20 días hábiles contados a partir del siguiente a la última acta parcial (ampliable en ciertos supuestos).', f:'Art. 46 fr. IV CFF'},
+  {id:'c2', t:'Preparar escrito con pruebas por cada observación', d:'Organizado por activo: hecho observado → argumento → pruebas anexas.', f:'Art. 46 fr. IV CFF'},
+  {id:'c3', t:'Evaluar autocorrección', d:'Cuantificar contribuciones, actualización, recargos y multas reducidas. Decisión que requiere validación del asesor y la dirección.', f:'Art. 76 CFF y demás aplicables'},
+  {id:'c4', t:'Evaluar acuerdo conclusivo ante PRODECON', d:'Cuando hay desacuerdo con hechos u omisiones y se busca una solución consensuada.', f:'Art. 69-C CFF'},
+  {id:'c5', t:'Corregir procesos internos', d:'Actualizar política de activos fijos, control de altas/bajas y conteos periódicos.', f:'Control interno'}
+ ]}
+];
+
+/* ===================== Estado ===================== */
+const KEY='activosFijos.v1';
+let S = cargar();
+function vacio(){return {config:{tope:175000,topeel:250000},activos:[],inpc:{},visita:{},sobrantes:[]};}
+function cargar(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return Object.assign(vacio(),o);}}catch(e){}return vacio();}
+function persistir(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){alert('No se pudo guardar en el navegador. Descargue un respaldo.');}}
+
+/* ===================== Utilidades ===================== */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>(n==null||isNaN(n))?'—':Number(n).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+const cat=k=>CATEGORIAS.find(c=>c.k===k)||CATEGORIAS[CATEGORIAS.length-1];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function ym(d){if(!d)return null;const [y,m]=d.split('-').map(Number);return {y,m};}
+function idx(y,m){return y*12+(m-1);}
+function idxToYM(i){const y=Math.floor(i/12),m=i%12+1;return y+'-'+String(m).padStart(2,'0');}
+const MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function mesTxt(i){return MESES[i%12]+' '+Math.floor(i/12);}
+function tag(cls,t){return `<span class="tag ${cls}">${esc(t)}</span>`;}
+
+/* ===================== Navegación ===================== */
+const TABS=[['inicio','Inicio'],['config','Configuración'],['activos','Activos'],['inpc','INPC'],['dep','Depreciación'],['conteo','Conteo físico'],['alertas','Alertas'],['visita','Visita domiciliaria'],['guia','Guía'],['respaldo','Respaldo']];
+function nav(){ $('nav').innerHTML=TABS.map(([k,n])=>`<button data-k="${k}" onclick="ir('${k}')">${n}</button>`).join(''); }
+function ir(k){
+  document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+k));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+  try{localStorage.setItem(KEY+'.tab',k);}catch(e){}
+  render(k); window.scrollTo(0,0);
+}
+function render(k){
+  ({inicio:renderInicio,config:renderConfig,activos:renderActivos,inpc:renderINPC,dep:renderDep,conteo:renderConteo,alertas:renderAlertas,visita:renderVisita,guia:renderGuia})[k]?.();
+}
+function imprimir(id){document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('printme',s.id===id));window.print();}
+
+/* ===================== Configuración ===================== */
+const CF=['razon','rfc','ejercicios','orden','fnotif','fultima','rep','resp','immex','saldo','fsaldo','tope','topeel'];
+function renderConfig(){CF.forEach(k=>{$('c-'+k).value=S.config[k]??'';});}
+function guardarConfig(){CF.forEach(k=>{const el=$('c-'+k);S.config[k]=el.type==='number'?(el.value===''?null:Number(el.value)):el.value;});persistir();$('c-msg').textContent='Guardado ✓';setTimeout(()=>$('c-msg').textContent='',1800);}
+
+/* ===================== Activos ===================== */
+const AF=['numero','descripcion','categoria','tasa','electrico','marca','modelo','serie','fadq','fuso','diferir','moi','iva','uuid','proveedor','rfcprov','fpago','cuenta','poliza','origen','pedimento','fped','fraccion','a24','domimmex','ubicacion','domicilio','responsable','cc','posesion','estatus','fbaja','motivo','pventa','evbaja','notas'];
+const NUMF=['tasa','moi','iva','pventa'];
+function initForm(){
+  $('a-categoria').innerHTML=CATEGORIAS.map(c=>`<option value="${c.k}">${esc(c.n)}</option>`).join('');
+  $('a-docs').innerHTML=DOCS.map(d=>`<label style="display:flex;gap:6px;align-items:center;color:var(--text);font-size:13.5px"><input type="checkbox" id="doc-${d.k}" style="width:auto">${esc(d.n)}</label>`).join('');
+  limpiarForm();
+}
+function onCategoria(){const c=cat($('a-categoria').value);$('a-tasa').value=c.t;$('a-cat-help').innerHTML=esc(c.f)+' '+tag('t-warn','verificar vigencia');}
+function onOrigen(){const o=$('a-origen').value;document.querySelectorAll('.ce').forEach(e=>e.classList.toggle('hidden',o==='nacional'));document.querySelectorAll('.temp').forEach(e=>e.classList.toggle('hidden',o!=='import_temp'));}
+function limpiarForm(){AF.forEach(k=>{const el=$('a-'+k);el.value=el.tagName==='SELECT'?el.options[0].value:'';});$('a-id').value='';DOCS.forEach(d=>$('doc-'+d.k).checked=false);$('f-titulo').textContent='Registrar activo';onCategoria();onOrigen();}
+function editar(id){const a=S.activos.find(x=>x.id===id);if(!a)return;AF.forEach(k=>{$('a-'+k).value=a[k]??'';});$('a-id').value=a.id;DOCS.forEach(d=>$('doc-'+d.k).checked=!!(a.docs||{})[d.k]);$('f-titulo').textContent='Editar activo '+a.numero;$('a-cat-help').innerHTML=esc(cat(a.categoria).f)+' '+tag('t-warn','verificar vigencia');onOrigen();ir('activos');}
+function guardarActivo(){
+  const a={id:$('a-id').value||uid()};
+  AF.forEach(k=>{const v=$('a-'+k).value.trim();a[k]=NUMF.includes(k)?(v===''?null:Number(v)):v;});
+  a.docs={};DOCS.forEach(d=>a.docs[d.k]=$('doc-'+d.k).checked);
+  const err=[];
+  if(!a.numero)err.push('número de activo');if(!a.descripcion)err.push('descripción');if(!a.fadq)err.push('fecha de adquisición');if(a.moi==null)err.push('MOI');
+  if(err.length){$('a-msg').innerHTML=tag('t-bad','Falta: '+err.join(', '));return;}
+  if(S.activos.some(x=>x.numero===a.numero&&x.id!==a.id)){$('a-msg').innerHTML=tag('t-bad','Ya existe un activo con ese número');return;}
+  const old=S.activos.find(x=>x.id===a.id);a.conteo=old?.conteo||{};
+  if(old)Object.assign(old,a);else S.activos.push(a);
+  persistir();$('a-msg').innerHTML=tag('t-ok','Guardado ✓');limpiarForm();renderActivos();setTimeout(()=>$('a-msg').innerHTML='',2000);
+}
+function eliminar(id){const a=S.activos.find(x=>x.id===id);if(!a||!confirm('¿Eliminar el activo '+a.numero+'? Si se dio de baja, es preferible registrar la baja en lugar de eliminarlo.'))return;S.activos=S.activos.filter(x=>x.id!==id);persistir();renderActivos();}
+function renderActivos(){
+  const q=($('buscar').value||'').toLowerCase(),f=$('filtro').value;
+  const rows=S.activos.filter(a=>{
+    if(f==='activo'&&a.estatus==='baja')return false;if(f==='baja'&&a.estatus!=='baja')return false;
+    if(f==='alertas'&&!alertas(a).length)return false;
+    return !q||[a.numero,a.descripcion,a.ubicacion,a.responsable,a.uuid,a.serie,a.pedimento].join(' ').toLowerCase().includes(q);
+  });
+  $('tbl-activos').innerHTML=`<tr><th>No.</th><th>Descripción</th><th>Categoría</th><th class="num">Tasa</th><th>Adquisición</th><th>Inicio uso</th><th class="num">MOI</th><th>Ubicación</th><th>Estatus</th><th>Alertas</th><th class="noprint"></th></tr>`+
+  (rows.length?rows.map(a=>{const al=alertas(a);return `<tr><td>${esc(a.numero)}</td><td>${esc(a.descripcion)}</td><td class="small">${esc(cat(a.categoria).n)}</td><td class="num">${a.tasa??'—'}%</td><td>${esc(a.fadq)}</td><td>${esc(a.fuso)}</td><td class="num">${fmt(a.moi)}</td><td>${esc(a.ubicacion)}</td><td>${a.estatus==='baja'?tag('t-info','Baja'):tag('t-ok','Activo')}</td><td>${al.length?tag(al.some(x=>x.s==='bad')?'t-bad':'t-warn',al.length+' alerta(s)'):tag('t-ok','OK')}</td><td class="noprint" style="white-space:nowrap"><button class="btn sec" onclick="editar('${a.id}')">Editar</button> <button class="btn danger" onclick="eliminar('${a.id}')">×</button></td></tr>`;}).join(''):`<tr><td colspan="11" class="muted">Sin activos. Registre el primero arriba o cargue datos de ejemplo en «Respaldo».</td></tr>`);
+  const tot=S.activos.filter(a=>a.estatus!=='baja').reduce((s,a)=>s+(a.moi||0),0);
+  let t=`MOI total de activos vigentes en el registro: <b>${fmt(tot)}</b>.`;
+  if(S.config.saldo!=null){const d=tot-S.config.saldo;t+=` Saldo en balanza: <b>${fmt(S.config.saldo)}</b>. Diferencia: <b>${fmt(d)}</b> ${Math.abs(d)<1?tag('t-ok','conciliado'):tag('t-bad','por conciliar')}`;}
+  else t+=' Capture el saldo de balanza en «Configuración» para conciliar.';
+  $('concilia').innerHTML=t;
+}
+
+/* ===================== Alertas ===================== */
+function alertas(a){
+  const r=[],d=a.docs||{},c=cat(a.categoria);
+  const add=(s,m,f)=>r.push({s,m,f});
+  if(!a.uuid&&!d.cfdi&&a.categoria!=='terreno')add('bad','Sin CFDI de adquisición identificado','Art. 27 fr. III LISR');
+  if((a.uuid||d.cfdi)&&!d.cfdivig)add('warn','CFDI sin validar como vigente en el SAT','Art. 27 LISR; art. 29 CFF');
+  if(!a.fuso&&a.categoria!=='terreno')add('bad','Sin fecha de inicio de uso','Art. 31 LISR');
+  else if(a.fuso&&!d.inicio&&a.categoria!=='terreno')add('warn','Sin evidencia documental del inicio de uso','Art. 31 LISR');
+  if(a.fuso&&a.fadq&&a.fuso<a.fadq)add('warn','Inicio de uso anterior a la adquisición: revisar fechas (¿arrendamiento previo?)','Consistencia de datos');
+  if(a.fpago==='Efectivo'&&(a.moi||0)>2000)add('bad','Pago en efectivo por monto superior al límite general','Art. 27 fr. III LISR (verificar límite aplicable)');
+  if(!a.fpago)add('warn','Forma de pago no capturada','Art. 27 fr. III LISR');
+  else if(!d.pago)add('warn','Sin comprobante de pago en expediente','Art. 27 fr. III LISR');
+  if(!d.poliza&&!a.poliza)add('warn','Sin póliza contable de alta','Art. 28 CFF');
+  if(a.origen!=='nacional'&&!a.pedimento)add('bad','Activo importado sin número de pedimento','Art. 146 Ley Aduanera');
+  if(a.origen!=='nacional'&&a.pedimento&&!d.pedimento)add('warn','Pedimento capturado pero no integrado al expediente','Art. 146 Ley Aduanera');
+  if(a.origen==='import_temp'){
+    if(a.a24!=='si')add('bad','Temporal IMMEX: no confirmado su registro en Anexo 24','Anexo 24 RGCE');
+    if(a.domimmex!=='si')add('bad','Temporal IMMEX: no confirmado en domicilio registrado del programa','Art. 108 LA; Decreto IMMEX');
+    if(a.estatus==='baja'&&a.motivo==='venta')add('bad','Temporal IMMEX vendido: verificar cambio de régimen / retorno previo','Art. 108 LA');
+    add('info','Temporal IMMEX: confirmar propiedad (¿del contribuyente o del residente en el extranjero?) antes de deducir','LISR / esquema IMMEX');
+  }
+  if(c.tope&&(a.moi||0)>topeDe(a))add('info',`Deducción limitada al tope de ${fmt(topeDe(a))}`,'Art. 36 fr. II LISR');
+  if(!a.ubicacion)add('warn','Sin ubicación física','Control de inventario');
+  if(!a.responsable)add('warn','Sin responsable / resguardante','Control interno');
+  if(!d.etiqueta)add('warn','Sin etiqueta física confirmada','Control de inventario');
+  if(!d.foto)add('warn','Sin fotografía fechada (evidencia de existencia)','Materialidad');
+  if(a.estatus!=='baja'&&a.conteo?.estado!=='localizado')add(a.conteo?.estado==='no_localizado'?'bad':'warn',a.conteo?.estado==='no_localizado'?'NO localizado en conteo físico: investigar (¿baja no registrada?)':'Pendiente de verificar en conteo físico','Materialidad / art. 31 LISR');
+  if(a.posesion&&a.posesion!=='propio'&&!d.contrato)add('warn','Activo en poder de terceros sin contrato en expediente','Soporte de propiedad y uso');
+  if(a.estatus==='baja'){
+    if(!a.fbaja)add('bad','Baja sin fecha','Art. 31 LISR');
+    if(!a.motivo)add('warn','Baja sin motivo','Control interno');
+    if(!a.evbaja)add('bad','Baja sin evidencia documental','Art. 31 LISR');
+    if(a.motivo==='venta')add('info','Venta: confirmar CFDI emitido, IVA trasladado y ganancia/pérdida en la anual','Art. 18 fr. IV y art. 31 LISR; LIVA');
+  }
+  if(a.estatus!=='baja'&&(a.fbaja||a.motivo))add('warn','Tiene datos de baja pero estatus «Activo»','Consistencia de datos');
+  if(a.categoria==='maquinaria')add('info','Maquinaria: confirmar la tasa del art. 35 LISR según la actividad','Art. 35 LISR');
+  return r;
+}
+function topeDe(a){return a.electrico==='si'?(S.config.topeel||0):(S.config.tope||0);}
+function renderAlertas(){
+  const todas=[];S.activos.forEach(a=>alertas(a).forEach(x=>todas.push({a,...x})));
+  const n=s=>todas.filter(x=>x.s===s).length;
+  $('al-resumen').innerHTML=`<div class="kpi"><b style="color:var(--bad)">${n('bad')}</b><span>Críticas</span></div><div class="kpi"><b style="color:var(--warn)">${n('warn')}</b><span>A documentar</span></div><div class="kpi"><b style="color:var(--info)">${n('info')}</b><span>Informativas</span></div><div class="kpi"><b>${new Set(todas.filter(x=>x.s!=='info').map(x=>x.a.id)).size} / ${S.activos.length}</b><span>Activos con pendientes</span></div>`;
+  const ord={bad:0,warn:1,info:2};todas.sort((x,y)=>ord[x.s]-ord[y.s]);
+  $('tbl-alertas').innerHTML='<tr><th>Nivel</th><th>Activo</th><th>Hallazgo</th><th>Referencia</th><th></th></tr>'+(todas.length?todas.map(x=>`<tr><td>${tag({bad:'t-bad',warn:'t-warn',info:'t-info'}[x.s],{bad:'Crítica',warn:'Documentar',info:'Info'}[x.s])}</td><td>${esc(x.a.numero)}<div class="small muted">${esc(x.a.descripcion)}</div></td><td>${esc(x.m)}</td><td class="small">${esc(x.f)}</td><td><button class="btn sec" onclick="editar('${x.a.id}')">Corregir</button></td></tr>`).join(''):'<tr><td colspan="5" class="muted">Sin alertas.</td></tr>');
+}
+
+/* ===================== INPC ===================== */
+function guardarINPC(){const m=$('i-mes').value,v=Number($('i-valor').value);if(!m||!(v>0)){alert('Capture mes y valor válido');return;}S.inpc[m]=v;persistir();$('i-valor').value='';renderINPC();}
+function cargaMasivaINPC(){let ok=0,bad=0;$('i-masivo').value.split(/\n/).forEach(l=>{l=l.trim();if(!l)return;const p=l.split(/[\t;, ]+/);const m=(p[0]||'').replace('/','-');const v=Number((p[1]||'').replace(',','.'));if(/^\d{4}-\d{2}$/.test(m)&&v>0){S.inpc[m]=v;ok++;}else bad++;});persistir();$('i-msg').innerHTML=tag(bad?'t-warn':'t-ok',`${ok} cargados, ${bad} líneas no reconocidas`);renderINPC();}
+function borrarINPC(m){delete S.inpc[m];persistir();renderINPC();}
+function mesesRequeridos(ej){
+  const req=new Set();
+  S.activos.forEach(a=>{const c=calcActivo(a,ej);if(c&&c.n>0){req.add(c.mAdq);req.add(c.mMid);}});
+  return [...req].sort();
+}
+function renderINPC(){
+  const ks=Object.keys(S.inpc).sort().reverse();
+  $('tbl-inpc').innerHTML='<tr><th>Mes</th><th class="num">INPC</th><th></th></tr>'+(ks.length?ks.map(k=>`<tr><td>${k}</td><td class="num">${S.inpc[k]}</td><td><button class="btn danger" onclick="borrarINPC('${k}')">×</button></td></tr>`).join(''):'<tr><td colspan="3" class="muted">Sin valores capturados.</td></tr>');
+  const ej=Number($('d-ej').value)||new Date().getFullYear()-1;
+  const f=mesesRequeridos(ej).filter(m=>!S.inpc[m]);
+  $('inpc-faltantes').innerHTML=`Para el ejercicio <b>${ej}</b> (cámbielo en «Depreciación»): `+(f.length?f.map(m=>tag('t-bad',m)).join(' '):tag('t-ok','no falta ninguno'));
+}
+
+/* ===================== Depreciación ===================== */
+function trunc4(x){return Math.floor(x*10000+1e-9)/10000;}
+function calcActivo(a,ej){
+  const tasa=(a.tasa||0)/100;
+  if(!a.fadq||!a.fuso||!tasa||a.moi==null)return null;
+  const base=cat(a.categoria).tope?Math.min(a.moi,topeDe(a)):a.moi;
+  const u=a.fuso.split('-').map(Number);
+  let S0=u[2]===1?idx(u[0],u[1]):idx(u[0],u[1])+1;
+  if(a.diferir==='si')S0=Math.max(S0,idx(u[0]+1,1));
+  let E=Infinity;
+  if(a.estatus==='baja'&&a.fbaja){const b=a.fbaja.split('-').map(Number);E=idx(b[0],b[1])-1;}
+  const anual=base*tasa;
+  const histAno=y=>{const from=Math.max(S0,idx(y,1)),to=Math.min(E,idx(y,12));return to>=from?to-from+1:0;};
+  const y0=Math.floor(S0/12);
+  let acum=0;
+  for(let y=y0;y<ej;y++){acum=Math.min(base,acum+anual*histAno(y)/12);}
+  const n=histAno(ej);
+  let ded=Math.max(0,Math.min(anual*n/12,base-acum));
+  const fb=a.fbaja?Number(a.fbaja.slice(0,4)):null;
+  let ajusteInutil=0;
+  if(a.estatus==='baja'&&a.motivo==='inutil'&&fb===ej){ajusteInutil=Math.max(0,base-acum-ded-1);}
+  const from=Math.max(S0,idx(ej,1));
+  const mMid=idxToYM(from+Math.max(0,Math.floor(n/2)-1));
+  const ad=ym(a.fadq);const mAdq=a.fadq.slice(0,7);
+  let factor=null;
+  if(S.inpc[mMid]&&S.inpc[mAdq]){factor=trunc4(S.inpc[mMid]/S.inpc[mAdq]);if(factor<1)factor=1;}
+  const total=ded+ajusteInutil;
+  return {base,anual,acum,n,ded,ajusteInutil,mMid,mAdq,factor,act:factor!=null?total*factor:null,pend:base-acum-total,total};
+}
+let depRows=[];
+function renderDep(){
+  const ej=Number($('d-ej').value);if(!ej)return;
+  depRows=[];
+  const sin=[];
+  S.activos.forEach(a=>{const c=calcActivo(a,ej);if(!c){if(a.categoria!=='terreno')sin.push(a.numero);return;}if(c.n>0||c.ajusteInutil>0)depRows.push({a,c});});
+  let h='<tr><th>No.</th><th>Descripción</th><th class="num">Base (MOI)</th><th class="num">Tasa</th><th class="num">Ded. acum. ant.</th><th class="num">Meses</th><th class="num">Ded. histórica</th><th>INPC adq.</th><th>INPC mitad</th><th class="num">Factor</th><th class="num">Ded. actualizada</th><th class="num">Pend. por deducir</th></tr>';
+  let tH=0,tA=0,falt=false;
+  depRows.forEach(({a,c})=>{tH+=c.total;if(c.act!=null)tA+=c.act;else falt=true;
+    h+=`<tr><td>${esc(a.numero)}</td><td>${esc(a.descripcion)}${c.base<a.moi?'<div class="small">'+tag('t-info','tope art. 36')+'</div>':''}${c.ajusteInutil?'<div class="small">'+tag('t-info','incluye remanente por dejar de ser útil')+'</div>':''}</td><td class="num">${fmt(c.base)}</td><td class="num">${a.tasa}%</td><td class="num">${fmt(c.acum)}</td><td class="num">${c.n}</td><td class="num">${fmt(c.total)}</td><td>${c.mAdq} ${S.inpc[c.mAdq]?'':tag('t-bad','falta')}</td><td>${c.mMid} ${S.inpc[c.mMid]?'':tag('t-bad','falta')}</td><td class="num">${c.factor!=null?c.factor.toFixed(4):'—'}</td><td class="num">${c.act!=null?fmt(c.act):'—'}</td><td class="num">${fmt(c.pend)}</td></tr>`;});
+  h+=`<tr><th colspan="6">Total</th><th class="num">${fmt(tH)}</th><th colspan="3"></th><th class="num">${fmt(tA)}${falt?' *':''}</th><th></th></tr>`;
+  $('tbl-dep').innerHTML=depRows.length?h:'<tr><td class="muted">No hay activos con deducción en ese ejercicio.</td></tr>';
+  let al='';
+  if(falt)al+=`<div class="callout bad">* Faltan valores de INPC; el total actualizado está incompleto. Capture los meses marcados en la pestaña «INPC».</div>`;
+  if(sin.length)al+=`<div class="callout warn">Activos sin datos suficientes para calcular (fecha de adquisición, inicio de uso, tasa o MOI): ${sin.map(esc).join(', ')}</div>`;
+  $('dep-alert').innerHTML=al;
+  window._depTotal=falt?null:tA;compararDeclarada();
+}
+function compararDeclarada(){
+  const v=$('d-declarada').value;if(v===''||window._depTotal==null){$('d-dif').innerHTML='';return;}
+  const d=Number(v)-window._depTotal;
+  $('d-dif').innerHTML=`Diferencia declarada – calculada: <b>${fmt(d)}</b> `+(Math.abs(d)<1?tag('t-ok','coincide'):tag(d>0?'t-bad':'t-warn',d>0?'se dedujo más de lo calculado':'se dedujo menos de lo calculado'))+'<div class="help">Una diferencia no es por sí misma un error: revise criterios (meses, tasas, INPC, activos incluidos) con su asesor.</div>';
+}
+function exportDepCSV(){
+  if(!depRows.length){alert('Primero calcule la cédula.');return;}
+  const H=['numero','descripcion','base','tasa','acumulada_anterior','meses','deduccion_historica','mes_inpc_adq','mes_inpc_mitad','factor','deduccion_actualizada','pendiente'];
+  const L=depRows.map(({a,c})=>[a.numero,a.descripcion,c.base.toFixed(2),a.tasa,c.acum.toFixed(2),c.n,c.total.toFixed(2),c.mAdq,c.mMid,c.factor??'',c.act!=null?c.act.toFixed(2):'',c.pend.toFixed(2)]);
+  bajar('cedula_depreciacion_'+$('d-ej').value+'.csv',toCSV(H,L),'text/csv');
+}
+
+/* ===================== Conteo ===================== */
+function renderConteo(){
+  if(!$('k-fecha').value)$('k-fecha').value=new Date().toISOString().slice(0,10);
+  const ubs=[...new Set(S.activos.map(a=>a.ubicacion||'(sin ubicación)'))].sort();
+  const sel=$('k-ubic').value;
+  $('k-ubic').innerHTML='<option value="">Todas</option>'+ubs.map(u=>`<option ${u===sel?'selected':''}>${esc(u)}</option>`).join('');
+  const lista=S.activos.filter(a=>a.estatus!=='baja'&&(!sel||(a.ubicacion||'(sin ubicación)')===sel));
+  const loc=lista.filter(a=>a.conteo?.estado==='localizado').length,nol=lista.filter(a=>a.conteo?.estado==='no_localizado').length;
+  $('k-bar').style.width=(lista.length?loc/lista.length*100:0)+'%';
+  $('k-res').innerHTML=`${loc} localizados · ${nol} no localizados · ${lista.length-loc-nol} pendientes, de ${lista.length} activos vigentes.`;
+  $('tbl-conteo').innerHTML='<tr><th>No.</th><th>Descripción</th><th>Serie</th><th>Ubicación</th><th>Responsable</th><th>Resultado</th><th>Fecha</th><th>Observaciones</th></tr>'+lista.map(a=>{const k=a.conteo||{};return `<tr><td>${esc(a.numero)}</td><td>${esc(a.descripcion)}</td><td>${esc(a.serie)}</td><td>${esc(a.ubicacion)}</td><td>${esc(a.responsable)}</td><td><select onchange="marcar('${a.id}','estado',this.value)" style="min-width:140px"><option value="">Pendiente</option><option value="localizado" ${k.estado==='localizado'?'selected':''}>Localizado</option><option value="no_localizado" ${k.estado==='no_localizado'?'selected':''}>No localizado</option></select></td><td class="small">${esc(k.fecha||'')}</td><td><input value="${esc(k.obs||'')}" onchange="marcar('${a.id}','obs',this.value)" placeholder="Estado, diferencias…"></td></tr>`;}).join('');
+  $('tbl-sobrantes').innerHTML='<tr><th>Descripción</th><th>Ubicación</th><th>Observación</th><th>Fecha</th><th></th></tr>'+(S.sobrantes.length?S.sobrantes.map((s,i)=>`<tr><td>${esc(s.desc)}</td><td>${esc(s.ubic)}</td><td>${esc(s.obs)}</td><td>${esc(s.fecha)}</td><td><button class="btn danger" onclick="S.sobrantes.splice(${i},1);persistir();renderConteo()">×</button></td></tr>`).join(''):'<tr><td colspan="5" class="muted">Ninguno registrado.</td></tr>');
+}
+function marcar(id,k,v){const a=S.activos.find(x=>x.id===id);a.conteo=a.conteo||{};a.conteo[k]=v;if(k==='estado')a.conteo.fecha=$('k-fecha').value;persistir();if(k==='estado')renderConteo();}
+function agregarSobrante(){const d=$('s-desc').value.trim();if(!d)return;S.sobrantes.push({desc:d,ubic:$('s-ubic').value,obs:$('s-obs').value,fecha:$('k-fecha').value});['s-desc','s-ubic','s-obs'].forEach(i=>$(i).value='');persistir();renderConteo();}
+
+/* ===================== Visita ===================== */
+function autoEstado(code){
+  const A=S.activos.filter(a=>a.estatus!=='baja');if(!S.activos.length)return null;
+  const pct=(f,lista=A)=>lista.length?Math.round(lista.filter(f).length/lista.length*100):100;
+  switch(code){
+    case 'concilia':{if(S.config.saldo==null)return 'Capture saldo de balanza';const t=A.reduce((s,a)=>s+(a.moi||0),0);return Math.abs(t-S.config.saldo)<1?'✓ Conciliado':'Diferencia '+fmt(t-S.config.saldo);}
+    case 'cfdi':return pct(a=>a.uuid&&a.docs?.cfdivig,S.activos.filter(a=>a.categoria!=='terreno'))+'% con CFDI validado';
+    case 'pago':return S.activos.filter(a=>a.fpago==='Efectivo'&&(a.moi||0)>2000).length+' pagos en efectivo sobre límite';
+    case 'inicio':return pct(a=>a.fuso&&a.docs?.inicio)+'% con evidencia de inicio de uso';
+    case 'conteo':return pct(a=>a.conteo?.estado==='localizado')+'% localizados';
+    case 'bajas':{const b=S.activos.filter(a=>a.estatus==='baja');return b.length?pct(a=>a.evbaja&&a.fbaja,b)+'% de bajas con evidencia':'Sin bajas registradas';}
+    case 'pedimento':{const i=S.activos.filter(a=>a.origen!=='nacional');return i.length?pct(a=>a.pedimento,i)+'% importados con pedimento':'Sin activos importados';}
+    case 'immex':{const i=A.filter(a=>a.origen==='import_temp');return i.length?pct(a=>a.a24==='si'&&a.domimmex==='si',i)+'% temporales controlados':'Sin temporales';}
+    case 'posesion':{const i=A.filter(a=>a.posesion&&a.posesion!=='propio');return i.length?pct(a=>a.docs?.contrato,i)+'% con contrato':'Ninguno con terceros';}
+  }return null;
+}
+function addHabiles(fecha,dias){const d=new Date(fecha+'T12:00:00');let n=0;while(n<dias){d.setDate(d.getDate()+1);const w=d.getDay();if(w!==0&&w!==6)n++;}return d.toISOString().slice(0,10);}
+function renderVisita(){
+  let tot=0,ok=0;
+  $('v-lista').innerHTML=VISITA.map(g=>`<h3>${esc(g.g)}</h3>`+g.items.map(it=>{tot++;const v=S.visita[it.id]||{};if(v.e==='cumple'||v.e==='na')ok++;const au=it.auto?autoEstado(it.auto):null;
+    return `<div class="chk"><div><div class="t">${esc(it.t)}</div><div class="small">${esc(it.d)}</div><div class="f">${esc(it.f)}</div>${au?`<div class="small" style="margin-top:3px">${tag('t-info','Según registro: '+au)}</div>`:''}<input class="small" style="margin-top:6px" placeholder="Notas / responsable / evidencia" value="${esc(v.n||'')}" onchange="setV('${it.id}','n',this.value)"></div><div><select onchange="setV('${it.id}','e',this.value)"><option value="">Pendiente</option><option value="cumple" ${v.e==='cumple'?'selected':''}>Cumple</option><option value="parcial" ${v.e==='parcial'?'selected':''}>Parcial</option><option value="no" ${v.e==='no'?'selected':''}>No cumple</option><option value="na" ${v.e==='na'?'selected':''}>No aplica</option></select></div></div>`;}).join('')).join('');
+  $('v-bar').style.width=(ok/tot*100)+'%';
+  $('v-res').textContent=`${ok} de ${tot} puntos atendidos (cumple / no aplica).`;
+  let p='';
+  if(S.config.fultima){p=`<div class="callout warn"><b>Referencia de plazo (art. 46 fr. IV CFF):</b> última acta parcial ${esc(S.config.fultima)} → 20 días hábiles vencerían aproximadamente el <b>${addHabiles(S.config.fultima,20)}</b>. Cálculo que solo excluye sábados y domingos; NO considera días inhábiles oficiales ni periodos vacacionales de la autoridad. Confirme la fecha exacta con su asesor.</div>`;}
+  else p='<div class="callout">Capture la fecha de la última acta parcial en «Configuración» para ver una referencia del plazo para desvirtuar.</div>';
+  $('v-plazos').innerHTML=p;
+}
+function setV(id,k,v){S.visita[id]=S.visita[id]||{};S.visita[id][k]=v;persistir();if(k==='e')renderVisita();}
+
+/* ===================== Guía ===================== */
+function renderGuia(){$('tbl-tasas').innerHTML='<tr><th>Bien</th><th class="num">Tasa máx.</th><th>Fundamento</th></tr>'+CATEGORIAS.filter(c=>!['otro'].includes(c.k)).map(c=>`<tr><td>${esc(c.n)}</td><td class="num">${c.t}%</td><td class="small">${esc(c.f)} ${tag('t-warn','verificar vigencia')}</td></tr>`).join('');}
+
+/* ===================== Inicio ===================== */
+function renderInicio(){
+  const A=S.activos.filter(a=>a.estatus!=='baja');
+  const moi=A.reduce((s,a)=>s+(a.moi||0),0);
+  const crit=S.activos.reduce((s,a)=>s+alertas(a).filter(x=>x.s==='bad').length,0);
+  const loc=A.filter(a=>a.conteo?.estado==='localizado').length;
+  const vt=VISITA.reduce((s,g)=>s+g.items.length,0),vo=Object.values(S.visita).filter(v=>v.e==='cumple'||v.e==='na').length;
+  $('kpis').innerHTML=`<div class="kpi"><b>${A.length}</b><span>Activos vigentes${S.config.razon?' · '+esc(S.config.razon):''}</span></div><div class="kpi"><b>${fmt(moi)}</b><span>MOI total vigente</span></div><div class="kpi"><b style="color:${crit?'var(--bad)':'var(--ok)'}">${crit}</b><span>Alertas críticas</span></div><div class="kpi"><b>${A.length?Math.round(loc/A.length*100):0}%</b><span>Localizados en conteo físico</span></div><div class="kpi"><b>${Math.round(vo/vt*100)}%</b><span>Checklist de visita atendido</span></div>`;
+  const top=[];S.activos.forEach(a=>alertas(a).filter(x=>x.s==='bad').forEach(x=>top.push(`<li><b>${esc(a.numero)}</b> – ${esc(x.m)} <span class="small muted">(${esc(x.f)})</span></li>`)));
+  $('top-alertas').innerHTML=top.length?`<ul>${top.slice(0,10).join('')}</ul>${top.length>10?`<p class="small muted">… y ${top.length-10} más en «Alertas».</p>`:''}`:(S.activos.length?'<p>'+tag('t-ok','Sin alertas críticas')+'</p>':'<p class="muted">Aún no hay activos registrados.</p>');
+}
+
+/* ===================== CSV / Respaldo ===================== */
+function toCSV(H,L){const q=v=>{v=String(v??'');return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};return '﻿'+[H,...L].map(r=>r.map(q).join(',')).join('\n');}
+function bajar(nombre,contenido,tipo){const b=new Blob([contenido],{type:tipo});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=nombre;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);}
+function exportCSV(){const H=[...AF,...DOCS.map(d=>'doc_'+d.k),'conteo_estado','conteo_fecha','conteo_obs'];const L=S.activos.map(a=>[...AF.map(k=>a[k]),...DOCS.map(d=>a.docs?.[d.k]?'si':'no'),a.conteo?.estado,a.conteo?.fecha,a.conteo?.obs]);bajar('registro_activos_fijos.csv',toCSV(H,L),'text/csv');}
+function parseCSV(t){t=t.replace(/^﻿/,'');const rows=[];let r=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}else if(c==='"')q=true;else if(c===','){r.push(f);f='';}else if(c==='\n'){r.push(f);rows.push(r);r=[];f='';}else if(c!=='\r')f+=c;}if(f||r.length){r.push(f);rows.push(r);}return rows;}
+function importarCSV(ev){const file=ev.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{const rows=parseCSV(rd.result);const H=rows.shift().map(h=>h.trim());let n=0,dup=0;rows.forEach(r=>{if(r.every(x=>!x.trim()))return;const o={};H.forEach((h,i)=>o[h]=r[i]??'');if(!o.numero)return;if(S.activos.some(a=>a.numero===o.numero)){dup++;return;}const a={id:uid(),docs:{},conteo:{}};AF.forEach(k=>{const v=(o[k]||'').trim();a[k]=NUMF.includes(k)?(v===''?null:Number(v)):v;});if(!a.categoria)a.categoria='otro';if(!a.origen)a.origen='nacional';if(!a.estatus)a.estatus='activo';DOCS.forEach(d=>a.docs[d.k]=o['doc_'+d.k]==='si');if(o.conteo_estado)a.conteo={estado:o.conteo_estado,fecha:o.conteo_fecha,obs:o.conteo_obs};S.activos.push(a);n++;});persistir();$('r-msg').innerHTML=tag('t-ok',`${n} activos importados`)+(dup?' '+tag('t-warn',`${dup} omitidos por número duplicado`):'');ev.target.value='';};rd.readAsText(file,'utf-8');}
+function descargarRespaldo(){bajar('respaldo_activos_fijos_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(S,null,1),'application/json');}
+function restaurar(ev){const file=ev.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const o=JSON.parse(rd.result);if(!Array.isArray(o.activos))throw 0;if(!confirm('Esto reemplazará la información actual. ¿Continuar?'))return;S=Object.assign(vacio(),o);persistir();alert('Respaldo restaurado.');ir('inicio');}catch(e){alert('Archivo no válido.');}};rd.readAsText(file);ev.target.value='';}
+function borrarTodo(){if(confirm('¿Borrar TODA la información de este navegador? Descargue antes un respaldo.')){S=vacio();persistir();ir('inicio');}}
+function cargarEjemplo(){
+  if(S.activos.length&&!confirm('Se agregarán activos de ejemplo (ficticios) a su registro. ¿Continuar?'))return;
+  const ej=[
+    {numero:'EJ-001',descripcion:'Laptop (EJEMPLO)',categoria:'computo',tasa:30,fadq:'2023-03-15',fuso:'2023-03-20',moi:28000,iva:4480,uuid:'00000000-0000-0000-0000-000000000001',fpago:'Transferencia',ubicacion:'Oficinas – Contabilidad',responsable:'Responsable A',origen:'nacional',estatus:'activo',docs:{cfdi:1,cfdivig:1,pago:1,poliza:1,inicio:1,resguardo:1,foto:1,etiqueta:1},conteo:{estado:'localizado'}},
+    {numero:'EJ-002',descripcion:'Automóvil utilitario (EJEMPLO)',categoria:'automovil',tasa:25,fadq:'2022-07-01',fuso:'2022-07-01',moi:420000,uuid:'00000000-0000-0000-0000-000000000002',fpago:'Transferencia',ubicacion:'Estacionamiento',responsable:'Responsable B',origen:'nacional',estatus:'activo',docs:{cfdi:1,pago:1,poliza:1,foto:1}},
+    {numero:'EJ-003',descripcion:'Inyectora de plástico (EJEMPLO)',categoria:'maquinaria',tasa:10,fadq:'2021-10-10',fuso:'2022-01-15',moi:1850000,fpago:'Transferencia',ubicacion:'Planta – Línea 2',responsable:'Responsable C',origen:'import_temp',pedimento:'',a24:'no',estatus:'activo',docs:{cfdi:1,pago:1}},
+    {numero:'EJ-004',descripcion:'Escritorio ejecutivo (EJEMPLO)',categoria:'mobiliario',tasa:10,fadq:'2020-02-01',fuso:'2020-02-01',moi:9500,fpago:'Efectivo',ubicacion:'Oficinas – Dirección',origen:'nacional',estatus:'baja',fbaja:'2024-05-10',motivo:'inutil',docs:{}}
+  ];
+  ej.forEach(e=>{if(S.activos.some(a=>a.numero===e.numero))return;const a={id:uid(),conteo:{},docs:{}};AF.forEach(k=>a[k]=e[k]??(k==='posesion'?'propio':k==='electrico'||k==='diferir'?'no':(NUMF.includes(k)?null:'')));a.docs=Object.fromEntries(Object.entries(e.docs).map(([k,v])=>[k,!!v]));a.conteo=e.conteo||{};S.activos.push(a);});
+  persistir();alert('Datos de ejemplo cargados. Recuerde: el INPC no viene precargado; captúrelo en la pestaña «INPC» para ver la deducción actualizada.');ir('activos');
+}
+
+/* ===================== Arranque ===================== */
+nav();initForm();
+$('d-ej').value=(S.config.ejercicios&&/^\d{4}/.test(S.config.ejercicios))?S.config.ejercicios.slice(0,4):new Date().getFullYear()-1;
+let t0='inicio';try{t0=localStorage.getItem(KEY+'.tab')||'inicio';}catch(e){}
+ir(TABS.some(t=>t[0]===t0)?t0:'inicio');
+</script>
+</body>
+</html>
