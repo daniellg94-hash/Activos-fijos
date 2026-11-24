@@ -119,7 +119,7 @@ ol.steps li{margin-bottom:6px}
 </head>
 <body>
 <header>
-  <h1>Control de Activos Fijos · Preparación para Visita Domiciliaria <span class="tag t-info" title="Incluye: registro, depreciación, conteo, croquis de planta, fotografías por activo y guardado en carpeta local">Versión 1.4 · 24-nov-2026</span></h1>
+  <h1>Control de Activos Fijos · Preparación para Visita Domiciliaria <span class="tag t-info" title="Incluye: registro, depreciación, conteo, croquis de planta, fotografías por activo y guardado en carpeta local">Versión 1.5 · 24-nov-2026</span></h1>
   <p>Registro, depreciación fiscal (LISR), conteo físico, expediente y checklist de revisión. Puede guardar todo automáticamente en una carpeta de su computadora (pestaña «Respaldo»).</p>
   <div id="disk-status" class="small" style="margin-top:6px"></div>
   <nav id="nav"></nav>
@@ -484,7 +484,7 @@ ol.steps li{margin-bottom:6px}
     <h2>Croquis de planta</h2>
     <p>Cargue el croquis o plano de cada planta, nave, nivel o bodega y marque sobre él dónde está cada activo. Sirve para planear el <b>recorrido físico</b> de la visita, para el conteo y para demostrar de forma rápida la existencia y ubicación de los bienes.</p>
     <ol class="steps small">
-      <li><b>Cargue la imagen</b> del croquis (PNG o JPG). Si lo tiene en PDF o DWG, expórtelo o tómele captura como imagen.</li>
+      <li><b>Cargue el croquis</b> en <b>PDF, PNG o JPG</b>. Si el PDF tiene varias páginas, la herramienta le pregunta cuál usar. Si lo tiene en DWG (AutoCAD), primero expórtelo a PDF.</li>
       <li>Elija <b>«Colocar activos»</b>, seleccione un activo de la lista y haga clic en el punto del croquis donde está. La herramienta pasa automáticamente al siguiente activo pendiente.</li>
       <li>Durante el recorrido, haga clic en un punto para marcarlo como <b>localizado</b> o <b>no localizado</b>: se actualiza el conteo físico.</li>
       <li>Imprima el croquis con su lista de activos para entregarlo al equipo que acompañará a los visitadores.</li>
@@ -495,7 +495,7 @@ ol.steps li{margin-bottom:6px}
         <div><label>Nombre (planta / nave / nivel) *</label><input id="cq-nombre" placeholder="p. ej. Planta 1 – Nave de producción"></div>
         <div><label>Domicilio al que corresponde</label><input id="cq-dom" placeholder="Debe coincidir con un domicilio registrado en el RFC"></div>
         <div><label>Fecha / versión del croquis</label><input id="cq-ver" placeholder="p. ej. Rev. 3, oct-2026"></div>
-        <div><label>Archivo de imagen *</label><input type="file" id="cq-file" accept="image/png,image/jpeg,image/webp,image/gif"></div>
+        <div><label>Archivo del croquis (PDF, PNG o JPG) *</label><input type="file" id="cq-file" accept="application/pdf,.pdf,image/png,image/jpeg,image/webp,image/gif"></div>
       </div>
       <div class="row" style="margin-top:10px"><button class="btn" onclick="cargarCroquis()">Cargar croquis</button><span id="cq-msg" class="small"></span></div>
     </fieldset>
@@ -510,7 +510,7 @@ ol.steps li{margin-bottom:6px}
         <div class="row noprint">
           <button class="btn sec" onclick="imprimir('t-croquis')">Imprimir</button>
           <button class="btn sec" onclick="editarCroquisMeta()">Renombrar</button>
-          <label class="btn sec" style="display:inline-block;margin:0">Reemplazar imagen<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange="reemplazarImagen(event)"></label>
+          <label class="btn sec" style="display:inline-block;margin:0">Reemplazar archivo<input type="file" accept="application/pdf,.pdf,image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange="reemplazarImagen(event)"></label>
           <button class="btn danger" onclick="eliminarCroquis()">Eliminar croquis</button>
         </div>
       </div>
@@ -961,18 +961,49 @@ function leerImagen(file,MAX=3200,maxBytes=4e6,tipo='croquis'){return new Promis
     const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height);
     res({src:cv.toDataURL('image/jpeg',0.9),w:cv.width,h:cv.height});};im.src=rd.result;};
   rd.readAsDataURL(file);});}
+/* PDF: se dibuja la página elegida con pdf.js dentro del navegador; el archivo no se envía a ningún lado.
+   La librería se descarga de cdnjs la primera vez que se carga un PDF (requiere internet). */
+const PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+let pdfjsListo=null;
+function cargarPdfjs(){
+  return pdfjsListo||(pdfjsListo=(async()=>{
+    await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=PDFJS+'pdf.min.js';sc.onload=res;sc.onerror=()=>{pdfjsListo=null;rej('No se pudo cargar el lector de PDF: se necesita internet la primera vez. Como alternativa, exporte el croquis a PNG o JPG.');};document.head.appendChild(sc);});
+    try{const t=await(await fetch(PDFJS+'pdf.worker.min.js')).text();pdfjsLib.GlobalWorkerOptions.workerSrc=URL.createObjectURL(new Blob([t],{type:'text/javascript'}));}
+    catch(e){pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS+'pdf.worker.min.js';}
+    return pdfjsLib;})());
+}
+async function leerPDF(file){
+  const lib=await cargarPdfjs();
+  let pdf;try{pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;}catch(e){throw /password/i.test(e&&e.name||'')?'El PDF está protegido con contraseña. Quite la protección o expórtelo como imagen.':'No se pudo leer el PDF.';}
+  let n=1;
+  if(pdf.numPages>1){const r=prompt(`El PDF tiene ${pdf.numPages} páginas. ¿En qué página está el croquis?`,'1');if(r===null)throw 'Carga cancelada.';n=Math.min(pdf.numPages,Math.max(1,parseInt(r,10)||1));}
+  const page=await pdf.getPage(n),v1=page.getViewport({scale:1});
+  const vp=page.getViewport({scale:Math.min(5,3200/Math.max(v1.width,v1.height))});
+  const cv=document.createElement('canvas');cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);
+  const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);
+  await page.render({canvasContext:cx,viewport:vp}).promise;
+  let src=cv.toDataURL('image/png');if(src.length>6e6)src=cv.toDataURL('image/jpeg',0.92);
+  return {src,w:cv.width,h:cv.height};
+}
+function leerCroquis(file){
+  if(!file)return Promise.reject('Seleccione el archivo del croquis.');
+  if(file.type==='application/pdf'||/\.pdf$/i.test(file.name))return leerPDF(file);
+  if(/\.(dwg|dxf)$/i.test(file.name))return Promise.reject('Los archivos DWG/DXF de AutoCAD no se pueden leer directamente. Expórtelo a PDF (Imprimir › «DWG To PDF») y cárguelo.');
+  return leerImagen(file);
+}
 async function cargarCroquis(){
   const nombre=$('cq-nombre').value.trim();
   if(!nombre){$('cq-msg').innerHTML=tag('t-bad','Capture el nombre del croquis');return;}
   try{
-    const img=await leerImagen($('cq-file').files[0]);
+    $('cq-msg').innerHTML=tag('t-info','Procesando…');
+    const img=await leerCroquis($('cq-file').files[0]);
     const c={id:uid(),nombre,dom:$('cq-dom').value.trim(),ver:$('cq-ver').value.trim(),fecha:new Date().toISOString().slice(0,10),w:img.w,h:img.h,pins:[]};
     await IDB.put(c.id,img.src);S.croquis.push(c);persistir();cqSel=c.id;
     ['cq-nombre','cq-dom','cq-ver','cq-file'].forEach(i=>$(i).value='');
     $('cq-msg').innerHTML=tag('t-ok','Croquis cargado ✓');$('cq-modo').value='colocar';renderCroquis();
   }catch(e){$('cq-msg').innerHTML=tag('t-bad',String(e));}
 }
-async function reemplazarImagen(ev){const c=cqActual();if(!c)return;try{const img=await leerImagen(ev.target.files[0]);if(c.pins.length&&!confirm('Los puntos ya colocados conservan su posición relativa. Si el nuevo plano tiene otra escala o encuadre, tendrá que reubicarlos. ¿Continuar?'))return;await IDB.put(c.id,img.src);c.w=img.w;c.h=img.h;persistir();renderCroquis();}catch(e){alert(e);}ev.target.value='';}
+async function reemplazarImagen(ev){const c=cqActual();if(!c)return;try{const img=await leerCroquis(ev.target.files[0]);if(c.pins.length&&!confirm('Los puntos ya colocados conservan su posición relativa. Si el nuevo plano tiene otra escala o encuadre, tendrá que reubicarlos. ¿Continuar?'))return;await IDB.put(c.id,img.src);c.w=img.w;c.h=img.h;persistir();renderCroquis();}catch(e){alert(e);}ev.target.value='';}
 function editarCroquisMeta(){const c=cqActual();if(!c)return;const n=prompt('Nombre del croquis',c.nombre);if(n===null)return;const d=prompt('Domicilio',c.dom||'');const v=prompt('Fecha / versión',c.ver||'');c.nombre=n.trim()||c.nombre;if(d!==null)c.dom=d.trim();if(v!==null)c.ver=v.trim();persistir();renderCroquis();}
 function eliminarCroquis(){const c=cqActual();if(!c||!confirm('¿Eliminar el croquis «'+c.nombre+'» y sus '+c.pins.length+' puntos? Los activos no se borran.'))return;IDB.del(c.id);S.croquis=S.croquis.filter(x=>x.id!==c.id);cqSel=null;persistir();renderCroquis();}
 function estadoPin(a){if(a.estatus==='baja')return 'p-baja';return {localizado:'p-ok',no_localizado:'p-bad'}[a.conteo?.estado]||'p-pend';}
@@ -992,7 +1023,7 @@ async function renderCroquis(){
     const prev=$('cq-activo').value;
     const pend=vig.filter(a=>!croquisDe(a.id)),aqui=S.activos.filter(a=>c.pins.some(p=>p.a===a.id)),otros=vig.filter(a=>{const k=croquisDe(a.id);return k&&k.id!==c.id;});
     const opt=a=>`<option value="${a.id}">${esc(a.numero)} – ${esc(a.descripcion)}${a.ubicacion?' ('+esc(a.ubicacion)+')':''}</option>`;
-    $('cq-activo').innerHTML=`<option value="">${pend.length?'— Seleccione un activo —':'— Todos ubicados; elija uno para reubicar —'}</option>`+(pend.length?`<optgroup label="Sin ubicar (${pend.length})">${pend.map(opt).join('')}</optgroup>`:'')+(aqui.length?`<optgroup label="Ya en este croquis (reubicar)">${aqui.map(opt).join('')}</optgroup>`:'')+(otros.length?`<optgroup label="En otro croquis (mover aquí)">${otros.map(opt).join('')}</optgroup>`:'');
+    $('cq-activo').innerHTML=`<option value="">${!vig.length?'— Primero registre activos en la pestaña «Activos» —':pend.length?'— Seleccione un activo —':'— Todos ubicados; elija uno para reubicar —'}</option>`+(pend.length?`<optgroup label="Sin ubicar (${pend.length})">${pend.map(opt).join('')}</optgroup>`:'')+(aqui.length?`<optgroup label="Ya en este croquis (reubicar)">${aqui.map(opt).join('')}</optgroup>`:'')+(otros.length?`<optgroup label="En otro croquis (mover aquí)">${otros.map(opt).join('')}</optgroup>`:'');
     if(prev&&[...$('cq-activo').options].some(o=>o.value===prev)&&!c.pins.some(p=>p.a===prev))$('cq-activo').value=prev;
     else $('cq-activo').value=pend[0]?.id||'';
   }
