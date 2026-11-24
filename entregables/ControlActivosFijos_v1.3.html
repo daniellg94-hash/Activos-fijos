@@ -117,8 +117,9 @@ ol.steps li{margin-bottom:6px}
 </head>
 <body>
 <header>
-  <h1>Control de Activos Fijos · Preparación para Visita Domiciliaria <span class="tag t-info" title="Incluye: registro, depreciación, conteo, croquis de planta y fotografías por activo">Versión 1.2 · 24-nov-2026</span></h1>
-  <p>Registro, depreciación fiscal (LISR), conteo físico, expediente y checklist de revisión. Los datos se guardan solo en este navegador; respalde con frecuencia (pestaña «Respaldo»).</p>
+  <h1>Control de Activos Fijos · Preparación para Visita Domiciliaria <span class="tag t-info" title="Incluye: registro, depreciación, conteo, croquis de planta, fotografías por activo y guardado en carpeta local">Versión 1.3 · 24-nov-2026</span></h1>
+  <p>Registro, depreciación fiscal (LISR), conteo físico, expediente y checklist de revisión. Puede guardar todo automáticamente en una carpeta de su computadora (pestaña «Respaldo»).</p>
+  <div id="disk-status" class="small" style="margin-top:6px"></div>
   <nav id="nav"></nav>
 </header>
 
@@ -538,8 +539,25 @@ ol.steps li{margin-bottom:6px}
 <!-- ======================= RESPALDO ======================= -->
 <section class="tab" id="t-respaldo">
   <div class="card">
-    <h2>Respaldo y restauración</h2>
-    <p>La información vive solo en este navegador. Descargue un respaldo después de cada sesión de trabajo y guárdelo en un lugar seguro (contiene datos fiscales).</p>
+    <h2>Guardar todo en una carpeta de mi computadora</h2>
+    <p>Elija una carpeta de su equipo (por ejemplo <code>Documentos\ActivosFijos</code>). A partir de ese momento, <b>cada cambio se graba automáticamente en esa carpeta</b>: datos, fotos de activos, croquis y un respaldo por día. Si cambia de navegador o de computadora, solo tiene que volver a elegir la misma carpeta.</p>
+    <div id="fs-panel"></div>
+    <details><summary>¿Qué archivos se crean en la carpeta?</summary>
+<pre class="small" style="white-space:pre-wrap">CarpetaElegida/
+├─ activos_fijos_datos.json      ← toda la información (se actualiza en cada cambio)
+├─ imagenes/
+│   ├─ EJ-001__foto__xxxx.jpg     ← fotos de cada activo
+│   └─ croquis__Planta_1__xxxx.png ← croquis de planta
+└─ respaldos/
+    ├─ respaldo_2026-11-24.json   ← una copia por día de trabajo
+    └─ antes_de_borrar_….json      ← copia automática antes de borrar o restaurar</pre>
+      <p class="small">No mueva ni renombre los archivos de la carpeta <code>imagenes</code>: el número final del nombre es el que los relaciona con cada activo o croquis.</p>
+    </details>
+    <div class="callout warn small"><b>Requisitos y recomendaciones.</b> Esta función necesita <b>Google Chrome o Microsoft Edge</b> en computadora (Firefox y Safari no la permiten). Si quiere que la información <u>no salga de su equipo</u>, elija una carpeta que <b>no</b> esté sincronizada con OneDrive, Google Drive, iCloud o Dropbox. Por seguridad, la primera vez que abra la herramienta en cada sesión el navegador le pedirá confirmar el acceso a la carpeta (botón «Reconectar»).</div>
+  </div>
+  <div class="card">
+    <h2>Respaldo y restauración manual</h2>
+    <p>Además de la carpeta, puede descargar un archivo de respaldo único (incluye fotos y croquis) para enviarlo o guardarlo en otro lugar. Contiene datos fiscales: guárdelo en un lugar seguro.</p>
     <div class="row">
       <button class="btn" onclick="descargarRespaldo()">Descargar respaldo (JSON)</button>
       <label class="btn sec" style="display:inline-block;margin:0">Restaurar respaldo<input type="file" accept=".json" onchange="restaurar(event)" class="hidden"></label>
@@ -631,7 +649,7 @@ const KEY='activosFijos.v1';
 let S = cargar();
 function vacio(){return {config:{tope:175000,topeel:250000},activos:[],inpc:{},visita:{},sobrantes:[],croquis:[]};}
 function cargar(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return Object.assign(vacio(),o);}}catch(e){}return vacio();}
-function persistir(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){alert('No se pudo guardar en el navegador. Descargue un respaldo.');}}
+function persistir(){S.guardado=new Date().toISOString();try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){if(!FSX.ok)alert('No se pudo guardar en el navegador. Descargue un respaldo.');}FSX.programar();}
 
 /* ===================== Utilidades ===================== */
 const $=id=>document.getElementById(id);
@@ -924,7 +942,7 @@ async function fichaActivo(id){
 const IDB=(()=>{let dbp=null;const mem={};
   const open=()=>dbp||(dbp=new Promise((res,rej)=>{try{const r=indexedDB.open('activosFijosDB',1);r.onupgradeneeded=()=>r.result.createObjectStore('croquis');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}}));
   const tx=(mode,fn)=>open().then(db=>new Promise((res,rej)=>{const t=db.transaction('croquis',mode);const q=fn(t.objectStore('croquis'));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error);}));
-  return {get:k=>tx('readonly',s=>s.get(k)).catch(()=>mem[k]),put:(k,v)=>tx('readwrite',s=>s.put(v,k)).catch(()=>{mem[k]=v;alert('El navegador no permite guardar imágenes de forma permanente; el croquis se perderá al cerrar. Descargue un respaldo.');}),del:k=>tx('readwrite',s=>s.delete(k)).catch(()=>{delete mem[k];}),clear:()=>tx('readwrite',s=>s.clear()).catch(()=>{})};
+  return {get:k=>tx('readonly',s=>s.get(k)).catch(()=>mem[k]),put:(k,v)=>tx('readwrite',s=>s.put(v,k)).catch(()=>{mem[k]=v;alert('El navegador no permite guardar imágenes de forma permanente; el croquis se perderá al cerrar. Descargue un respaldo.');}),del:k=>tx('readwrite',s=>s.delete(k)).catch(()=>{delete mem[k];}),clear:()=>tx('readwrite',s=>s.clear()).then(()=>FSX.h&&tx('readwrite',s=>s.put(FSX.h,'__dir'))).catch(()=>{})};
 })();
 let cqSel=null,cqPop=null;
 const cqActual=()=>S.croquis.find(c=>c.id===cqSel);
@@ -1037,8 +1055,8 @@ function exportCSV(){const H=[...AF,...DOCS.map(d=>'doc_'+d.k),'conteo_estado','
 function parseCSV(t){t=t.replace(/^﻿/,'');const rows=[];let r=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}else if(c==='"')q=true;else if(c===','){r.push(f);f='';}else if(c==='\n'){r.push(f);rows.push(r);r=[];f='';}else if(c!=='\r')f+=c;}if(f||r.length){r.push(f);rows.push(r);}return rows;}
 function importarCSV(ev){const file=ev.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{const rows=parseCSV(rd.result);const H=rows.shift().map(h=>h.trim());let n=0,dup=0;rows.forEach(r=>{if(r.every(x=>!x.trim()))return;const o={};H.forEach((h,i)=>o[h]=r[i]??'');if(!o.numero)return;if(S.activos.some(a=>a.numero===o.numero)){dup++;return;}const a={id:uid(),docs:{},conteo:{}};AF.forEach(k=>{const v=(o[k]||'').trim();a[k]=NUMF.includes(k)?(v===''?null:Number(v)):v;});if(!a.categoria)a.categoria='otro';if(!a.origen)a.origen='nacional';if(!a.estatus)a.estatus='activo';DOCS.forEach(d=>a.docs[d.k]=o['doc_'+d.k]==='si');if(o.conteo_estado)a.conteo={estado:o.conteo_estado,fecha:o.conteo_fecha,obs:o.conteo_obs};S.activos.push(a);n++;});persistir();$('r-msg').innerHTML=tag('t-ok',`${n} activos importados`)+(dup?' '+tag('t-warn',`${dup} omitidos por número duplicado`):'');ev.target.value='';};rd.readAsText(file,'utf-8');}
 async function descargarRespaldo(){const imgs={};for(const c of S.croquis){const d=await IDB.get(c.id);if(d)imgs[c.id]=d;}for(const a of S.activos)for(const f of a.fotos||[]){const d=await IDB.get('foto:'+f.id);if(d)imgs['foto:'+f.id]=d;}bajar('respaldo_activos_fijos_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(Object.assign({},S,{imagenes:imgs})),'application/json');}
-function restaurar(ev){const file=ev.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const o=JSON.parse(rd.result);if(!Array.isArray(o.activos))throw 0;if(!confirm('Esto reemplazará la información actual. ¿Continuar?'))return;const imgs=Object.assign({},o.croquisImagenes,o.imagenes);delete o.croquisImagenes;delete o.imagenes;Object.keys(fotoCache).forEach(k=>delete fotoCache[k]);S=Object.assign(vacio(),o);persistir();IDB.clear().then(()=>Promise.all(Object.entries(imgs).map(([k,v])=>IDB.put(k,v)))).then(()=>{alert('Respaldo restaurado.');ir('inicio');});}catch(e){alert('Archivo no válido.');}};rd.readAsText(file);ev.target.value='';}
-function borrarTodo(){if(confirm('¿Borrar TODA la información de este navegador? Descargue antes un respaldo.')){S=vacio();persistir();IDB.clear();ir('inicio');}}
+function restaurar(ev){const file=ev.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const o=JSON.parse(rd.result);if(!Array.isArray(o.activos))throw 0;if(!confirm('Esto reemplazará la información actual. ¿Continuar?'))return;FSX.copiaSeguridad('antes_de_restaurar');const imgs=Object.assign({},o.croquisImagenes,o.imagenes);delete o.croquisImagenes;delete o.imagenes;Object.keys(fotoCache).forEach(k=>delete fotoCache[k]);S=Object.assign(vacio(),o);persistir();IDB.clear().then(()=>Promise.all(Object.entries(imgs).map(([k,v])=>IDB.put(k,v)))).then(()=>{alert('Respaldo restaurado.');ir('inicio');});}catch(e){alert('Archivo no válido.');}};rd.readAsText(file);ev.target.value='';}
+async function borrarTodo(){if(confirm('¿Borrar TODA la información?'+(FSX.ok?' Se guardará antes una copia en la carpeta «respaldos».':' Descargue antes un respaldo.'))){await FSX.copiaSeguridad('antes_de_borrar');S=vacio();persistir();IDB.clear();ir('inicio');}}
 function cargarEjemplo(){
   if(S.activos.length&&!confirm('Se agregarán activos de ejemplo (ficticios) a su registro. ¿Continuar?'))return;
   const ej=[
@@ -1051,11 +1069,83 @@ function cargarEjemplo(){
   persistir();alert('Datos de ejemplo cargados. Recuerde: el INPC no viene precargado; captúrelo en la pestaña «INPC» para ver la deducción actualizada.');ir('activos');
 }
 
+/* ===================== Carpeta local (File System Access API) ===================== */
+/* La carpeta elegida es la copia principal: JSON de datos + imagenes/ + respaldos/. El navegador queda como caché. */
+const FSX={h:null,ok:false,soporte:'showDirectoryPicker' in window,ultimo:null,error:null,cola:Promise.resolve(),t:null,
+  enCola(fn){this.cola=this.cola.then(fn).then(()=>{this.error=null;},e=>{this.error=e.message||String(e);}).then(()=>estadoCarpeta());return this.cola;},
+  async escribir(dir,nombre,data){const fh=await dir.getFileHandle(nombre,{create:true});const w=await fh.createWritable();await w.write(data);await w.close();},
+  async sub(n){return this.h.getDirectoryHandle(n,{create:true});},
+  async leerJSON(){try{const f=await(await this.h.getFileHandle('activos_fijos_datos.json')).getFile();return JSON.parse(await f.text());}catch(e){return null;}},
+  programar(){if(!this.ok)return;clearTimeout(this.t);this.t=setTimeout(()=>this.guardarDatos(),600);},
+  guardarDatos(){if(!this.ok)return;const txt=JSON.stringify(S,null,1),dia=new Date().toISOString().slice(0,10);
+    return this.enCola(async()=>{await this.escribir(this.h,'activos_fijos_datos.json',txt);await this.escribir(await this.sub('respaldos'),'respaldo_'+dia+'.json',txt);this.ultimo=new Date();});},
+  async copiaSeguridad(pref){if(!this.ok)return;const txt=JSON.stringify(S,null,1),ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+    await this.enCola(async()=>this.escribir(await this.sub('respaldos'),pref+'_'+ts+'.json',txt));},
+  nombreImg(k,v){const ext=((v.match(/^data:image\/(\w+)/)||[])[1]||'jpg').replace('jpeg','jpg'),lim=x=>String(x||'').replace(/[^\w\-]+/g,'_').slice(0,40);
+    if(k.startsWith('foto:')){const id=k.slice(5),a=S.activos.find(x=>(x.fotos||[]).some(f=>f.id===id));return lim(a?a.numero:($('a-numero').value||'activo'))+'__foto__'+id+'.'+ext;}
+    const c=S.croquis.find(x=>x.id===k);return 'croquis__'+lim(c?c.nombre:'plano')+'__'+k+'.'+ext;},
+  async borrarImgId(dir,id){for await(const [n] of dir.entries())if(n.split('.')[0].endsWith('__'+id))await dir.removeEntry(n);},
+  imagen(k,v){if(!this.ok||k==='__dir')return;const id=k.startsWith('foto:')?k.slice(5):k,nombre=v?this.nombreImg(k,v):null;
+    return this.enCola(async()=>{const dir=await this.sub('imagenes');await this.borrarImgId(dir,id);if(v)await this.escribir(dir,nombre,await (await fetch(v)).blob());});},
+  async guardarTodo(){if(!this.ok)return;await this.guardarDatos();
+    const ks=[...S.croquis.map(c=>c.id),...S.activos.flatMap(a=>(a.fotos||[]).map(f=>'foto:'+f.id))];
+    for(const k of ks){const v=await IDB.get(k);if(v)await this.imagen(k,v);}},
+  async cargarDeCarpeta(o){
+    const imgs={};
+    try{const dir=await this.h.getDirectoryHandle('imagenes');for await(const [n,fh] of dir.entries()){if(fh.kind!=='file')continue;const p=n.split('.')[0].split('__');if(p.length<3)continue;const id=p[p.length-1];
+      const blob=await fh.getFile();imgs[p[p.length-2]==='foto'?'foto:'+id:id]=await new Promise(r=>{const rd=new FileReader();rd.onload=()=>r(rd.result);rd.readAsDataURL(blob);});}}catch(e){}
+    S=Object.assign(vacio(),o);try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+    Object.keys(fotoCache).forEach(k=>delete fotoCache[k]);
+    await IDB.clear();for(const [k,v] of Object.entries(imgs))await IDB_put(k,v);
+  },
+  async activar(h,interactivo){
+    this.h=h;await IDB_put('__dir',h);
+    const o=await this.leerJSON();
+    if(o&&Array.isArray(o.activos)){
+      const vacioNav=!S.activos.length&&!S.croquis.length;
+      const fc=o.guardado?new Date(o.guardado).toLocaleString('es-MX'):'sin fecha',fn=S.guardado?new Date(S.guardado).toLocaleString('es-MX'):'sin fecha';
+      let usarCarpeta=vacioNav||(o.guardado||'')>=(S.guardado||'');
+      if(interactivo&&!vacioNav&&o.guardado!==S.guardado)usarCarpeta=confirm(`La carpeta ya tiene información (${o.activos.length} activos, guardada ${fc}).\nEl navegador tiene ${S.activos.length} activos (guardada ${fn}).\n\nAceptar = usar la información de la CARPETA.\nCancelar = usar la del NAVEGADOR (la carpeta se actualizará; antes se guarda copia en «respaldos»).`);
+      this.ok=true;
+      if(usarCarpeta){await this.cargarDeCarpeta(o);this.ultimo=o.guardado?new Date(o.guardado):null;}
+      else{await this.copiaSeguridad('antes_de_sobrescribir');await this.guardarTodo();}
+    }else{this.ok=true;await this.guardarTodo();}
+    estadoCarpeta();const k=document.querySelector('nav button.on')?.dataset.k||'inicio';ir(k);
+  },
+  async elegir(){
+    if(!this.soporte){alert('Su navegador no permite guardar en carpetas. Abra la herramienta con Google Chrome o Microsoft Edge en computadora.');return;}
+    let h;try{h=await window.showDirectoryPicker({id:'activos-fijos',mode:'readwrite',startIn:'documents'});}catch(e){return;}
+    await this.activar(h,true);
+  },
+  async reconectar(){if(!this.h)return this.elegir();try{if(await this.h.requestPermission({mode:'readwrite'})!=='granted')return;}catch(e){return this.elegir();}await this.activar(this.h,true);},
+  async desconectar(){if(!confirm('¿Dejar de guardar en la carpeta? Los archivos ya guardados no se borran.'))return;this.ok=false;this.h=null;await IDB.del('__dir');estadoCarpeta();},
+  async iniciar(){
+    if(!this.soporte)return estadoCarpeta();
+    const h=await IDB.get('__dir');if(!h)return estadoCarpeta();this.h=h;
+    let perm='prompt';try{perm=h.queryPermission?await h.queryPermission({mode:'readwrite'}):'granted';}catch(e){}
+    if(perm==='granted')await this.activar(h,false);else estadoCarpeta();
+  }
+};
+const IDB_put=IDB.put,IDB_del=IDB.del;
+IDB.put=(k,v)=>IDB_put(k,v).then(r=>{FSX.imagen(k,v);return r;});
+IDB.del=k=>IDB_del(k).then(r=>{FSX.imagen(k,null);return r;});
+function estadoCarpeta(){
+  const hora=FSX.ultimo?FSX.ultimo.toLocaleTimeString('es-MX'):'—',nom=FSX.h?esc(FSX.h.name):'';
+  let st,panel;
+  if(!FSX.soporte){st=tag('t-warn','Datos solo en este navegador')+' Para guardar en una carpeta de su computadora abra la herramienta con Chrome o Edge.';panel=`<div class="callout bad">Este navegador no permite guardar en carpetas. Abra el archivo con <b>Google Chrome</b> o <b>Microsoft Edge</b> en computadora. Mientras tanto, use «Descargar respaldo».</div>`;}
+  else if(FSX.ok&&FSX.error){st=tag('t-bad','Error al guardar en carpeta «'+FSX.h.name+'»')+' '+esc(FSX.error);panel=`<div class="callout bad">No se pudo escribir en la carpeta: ${esc(FSX.error)}. Revise que exista y que tenga permiso; luego pulse «Reconectar».</div><button class="btn" onclick="FSX.reconectar()">Reconectar</button>`;}
+  else if(FSX.ok){st=tag('t-ok','Guardando en su computadora')+` Carpeta «${nom}» · último guardado ${hora}`;panel=`<div class="callout">${tag('t-ok','Activo')} Todo se guarda automáticamente en la carpeta <b>«${nom}»</b>. Último guardado: <b>${hora}</b></div><div class="row"><button class="btn" onclick="FSX.guardarTodo()">Guardar todo ahora</button><button class="btn sec" onclick="FSX.elegir()">Cambiar de carpeta</button><button class="btn danger" onclick="FSX.desconectar()">Dejar de guardar en carpeta</button></div>`;}
+  else if(FSX.h){st=tag('t-warn','Carpeta «'+nom+'» desconectada')+` <button class="btn" style="padding:2px 10px;font-size:12.5px" onclick="FSX.reconectar()">Reconectar</button>`;panel=`<div class="callout warn">El navegador pide confirmar el acceso a la carpeta <b>«${nom}»</b>. Mientras no la reconecte, los cambios quedan solo en el navegador.</div><div class="row"><button class="btn" onclick="FSX.reconectar()">Reconectar carpeta «${nom}»</button><button class="btn sec" onclick="FSX.elegir()">Elegir otra carpeta</button></div>`;}
+  else{st=tag('t-warn','Datos solo en este navegador')+` <button class="btn" style="padding:2px 10px;font-size:12.5px" onclick="FSX.elegir()">Guardar en una carpeta de mi computadora</button>`;panel=`<div class="row"><button class="btn" onclick="FSX.elegir()">Elegir carpeta en mi computadora</button></div>`;}
+  $('disk-status').innerHTML=st;$('fs-panel').innerHTML=panel;
+}
+
 /* ===================== Arranque ===================== */
 nav();initForm();document.addEventListener('keydown',e=>{if(e.key==='Escape')$('lb').classList.add('hidden');});$('cq-stage').addEventListener('click',clicCroquis);
 $('d-ej').value=(S.config.ejercicios&&/^\d{4}/.test(S.config.ejercicios))?S.config.ejercicios.slice(0,4):new Date().getFullYear()-1;
 let t0='inicio';try{t0=localStorage.getItem(KEY+'.tab')||'inicio';}catch(e){}
 ir(TABS.some(t=>t[0]===t0)?t0:'inicio');
+FSX.iniciar();
 </script>
 </body>
 </html>

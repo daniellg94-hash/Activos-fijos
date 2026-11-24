@@ -5,7 +5,12 @@ Herramienta web de un solo archivo (`index.html`) para llevar el control del inv
 ## Cómo abrirla
 1. Descargue `index.html`.
 2. Ábralo con doble clic en Chrome, Edge o Firefox. No requiere instalación ni internet.
-3. Los datos se guardan **solo en ese navegador** (los croquis, en su almacenamiento interno IndexedDB). Use la pestaña **Respaldo** para descargar un archivo JSON después de cada sesión; el respaldo incluye las imágenes de los croquis y las fotografías de los activos.
+3. **Guardar en su computadora (recomendado):** pestaña **Respaldo → «Elegir carpeta en mi computadora»** (requiere Google Chrome o Microsoft Edge). Desde ese momento cada cambio se graba automáticamente en esa carpeta:
+   - `activos_fijos_datos.json` – toda la información.
+   - `imagenes/` – fotos de activos y croquis.
+   - `respaldos/` – una copia por día y copias automáticas antes de borrar o restaurar.
+   Al abrir la herramienta en otra sesión, pulse **«Reconectar»** (el navegador pide confirmar el acceso). Para que nada salga del equipo, elija una carpeta no sincronizada con OneDrive, Google Drive, iCloud o Dropbox.
+4. Sin carpeta elegida, los datos quedan solo en el navegador; use **«Descargar respaldo»** para conservar una copia.
 
 ## Módulos
 | Pestaña | Para qué sirve |
