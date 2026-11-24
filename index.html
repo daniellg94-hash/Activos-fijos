@@ -48,9 +48,9 @@ textarea{min-height:60px}
 fieldset{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:10px 0}
 legend{font-weight:600;font-size:13.5px;padding:0 4px}
 .help{font-size:12px;color:var(--muted);margin-top:2px}
-button.btn{border:1px solid var(--accent);background:var(--accent);color:#fff;padding:7px 13px;border-radius:7px;cursor:pointer;font-size:14px}
-button.btn.sec{background:transparent;color:var(--accent)}
-button.btn.danger{border-color:var(--bad);background:transparent;color:var(--bad)}
+.btn{border:1px solid var(--accent);background:var(--accent);color:#fff;padding:7px 13px;border-radius:7px;cursor:pointer;font-size:14px}
+.btn.sec{background:transparent;color:var(--accent)}
+.btn.danger{border-color:var(--bad);background:transparent;color:var(--bad)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
 table{border-collapse:collapse;width:100%;font-size:13.5px}
@@ -75,6 +75,18 @@ details summary{cursor:pointer;font-weight:600}
 .progress > div{height:100%;background:var(--ok)}
 ol.steps li{margin-bottom:6px}
 .hidden{display:none}
+.cq-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--bg);max-height:75vh}
+.cq-stage{position:relative;display:inline-block;min-width:100%}
+.cq-stage img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
+.cq-stage.colocar{cursor:crosshair}
+.pin{position:absolute;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45);cursor:pointer;padding:0;font-size:10px;font-weight:700;color:#fff;line-height:18px;text-align:center}
+.pin span{position:absolute;left:24px;top:1px;white-space:nowrap;background:rgba(255,255,255,.92);color:#1d2330;padding:0 4px;border-radius:4px;font-size:11px;font-weight:600;pointer-events:none}
+.pin.p-ok{background:#1e7a46}.pin.p-bad{background:#b3261e}.pin.p-pend{background:#c27c00}.pin.p-baja{background:#6b7280}
+.pin.sel{outline:3px solid var(--accent);outline-offset:2px}
+.cq-pop{position:absolute;z-index:3;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;width:250px;box-shadow:0 4px 14px rgba(0,0,0,.25);font-size:13px}
+.cq-list button.on{background:var(--accent-soft);border-color:var(--accent)}
+.leg{display:inline-flex;align-items:center;gap:4px;margin-right:12px;font-size:12.5px}
+.leg i{display:inline-block;width:12px;height:12px;border-radius:50%}
 @media (max-width:640px){ .chk{grid-template-columns:1fr} header{position:static} }
 @media print{
   header nav, .noprint, button{display:none!important}
@@ -82,6 +94,10 @@ ol.steps li{margin-bottom:6px}
   section.tab{display:none!important}
   section.tab.printme{display:block!important}
   .card{break-inside:avoid;border-color:#999}
+  .cq-wrap{max-height:none;overflow:visible;border:0}
+  .cq-stage{width:100%!important}
+  .pin,.leg i{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #t-croquis .card{break-inside:auto}
 }
 </style>
 </head>
@@ -427,12 +443,68 @@ ol.steps li{margin-bottom:6px}
       <ul>
         <li>Designe <b>un solo enlace</b> con los visitadores y un respaldo. Todo requerimiento se recibe por escrito.</li>
         <li>Lleve una <b>bitácora</b>: qué se pidió, qué se entregó, fecha, folios. Entregue copias, no originales, y obtenga acuse.</li>
-        <li>Para el recorrido, prepare un plano con ubicaciones y tenga a mano el registro por área.</li>
+        <li>Para el recorrido, use la pestaña «Croquis de planta»: imprima cada croquis con sus activos marcados y tenga a mano el registro por área.</li>
         <li>No haga interpretaciones verbales ni reconozca hechos sin revisar: «se revisará y se dará respuesta por escrito».</li>
         <li>Lea completas las actas antes de firmar. Si hay inexactitudes, pida que se asiente su manifestación. Firmar el acta no implica aceptar su contenido.</li>
         <li>Conserve fotografías fechadas de los activos y del recorrido.</li>
       </ul>
     </details>
+  </div>
+</section>
+
+<!-- ======================= CROQUIS ======================= -->
+<section class="tab" id="t-croquis">
+  <div class="card noprint">
+    <h2>Croquis de planta</h2>
+    <p>Cargue el croquis o plano de cada planta, nave, nivel o bodega y marque sobre él dónde está cada activo. Sirve para planear el <b>recorrido físico</b> de la visita, para el conteo y para demostrar de forma rápida la existencia y ubicación de los bienes.</p>
+    <ol class="steps small">
+      <li><b>Cargue la imagen</b> del croquis (PNG o JPG). Si lo tiene en PDF o DWG, expórtelo o tómele captura como imagen.</li>
+      <li>Elija <b>«Colocar activos»</b>, seleccione un activo de la lista y haga clic en el punto del croquis donde está. La herramienta pasa automáticamente al siguiente activo pendiente.</li>
+      <li>Durante el recorrido, haga clic en un punto para marcarlo como <b>localizado</b> o <b>no localizado</b>: se actualiza el conteo físico.</li>
+      <li>Imprima el croquis con su lista de activos para entregarlo al equipo que acompañará a los visitadores.</li>
+    </ol>
+    <div class="callout warn">Revise qué entrega a la autoridad: el croquis es un documento de trabajo interno. Si se lo solicitan, entréguelo como cualquier otro documento, con acuse y solo con la información requerida.</div>
+    <fieldset><legend>Cargar nuevo croquis</legend>
+      <div class="form">
+        <div><label>Nombre (planta / nave / nivel) *</label><input id="cq-nombre" placeholder="p. ej. Planta 1 – Nave de producción"></div>
+        <div><label>Domicilio al que corresponde</label><input id="cq-dom" placeholder="Debe coincidir con un domicilio registrado en el RFC"></div>
+        <div><label>Fecha / versión del croquis</label><input id="cq-ver" placeholder="p. ej. Rev. 3, oct-2026"></div>
+        <div><label>Archivo de imagen *</label><input type="file" id="cq-file" accept="image/png,image/jpeg,image/webp,image/gif"></div>
+      </div>
+      <div class="row" style="margin-top:10px"><button class="btn" onclick="cargarCroquis()">Cargar croquis</button><span id="cq-msg" class="small"></span></div>
+    </fieldset>
+  </div>
+
+  <div class="card" id="cq-panel">
+    <div class="row noprint cq-list" id="cq-lista"></div>
+    <div id="cq-vacio" class="muted">Aún no hay croquis cargados.</div>
+    <div id="cq-cont" class="hidden">
+      <div class="row" style="justify-content:space-between;margin-top:10px">
+        <div><h2 id="cq-titulo" style="margin:0"></h2><div class="small muted" id="cq-sub"></div></div>
+        <div class="row noprint">
+          <button class="btn sec" onclick="imprimir('t-croquis')">Imprimir</button>
+          <button class="btn sec" onclick="editarCroquisMeta()">Renombrar</button>
+          <label class="btn sec" style="display:inline-block;margin:0">Reemplazar imagen<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange="reemplazarImagen(event)"></label>
+          <button class="btn danger" onclick="eliminarCroquis()">Eliminar croquis</button>
+        </div>
+      </div>
+      <div class="row noprint" style="margin:10px 0">
+        <div><label>Modo</label><select id="cq-modo" onchange="renderCroquis()"><option value="ver">Ver / recorrido</option><option value="colocar">Colocar activos</option></select></div>
+        <div id="cq-selwrap"><label>Activo a colocar</label><select id="cq-activo" style="min-width:260px"></select></div>
+        <div><label>Mostrar</label><select id="cq-filtro" onchange="renderCroquis()"><option value="">Todos los puntos</option><option value="pend">Solo pendientes de conteo</option><option value="bad">Solo no localizados</option></select></div>
+        <div><label>Zoom</label><input type="range" id="cq-zoom" min="50" max="300" step="10" value="100" oninput="aplicarZoom()" style="width:140px"></div>
+        <div><label>Etiquetas</label><select id="cq-etq" onchange="renderCroquis()"><option value="si">Mostrar número</option><option value="no">Ocultar</option></select></div>
+      </div>
+      <div class="small" style="margin-bottom:6px"><span class="leg"><i style="background:#1e7a46"></i>Localizado</span><span class="leg"><i style="background:#c27c00"></i>Pendiente</span><span class="leg"><i style="background:#b3261e"></i>No localizado</span><span class="leg"><i style="background:#6b7280"></i>Dado de baja</span></div>
+      <div class="cq-wrap" id="cq-wrap"><div class="cq-stage" id="cq-stage"><img id="cq-img" alt="Croquis de planta" draggable="false"></div></div>
+      <p class="small muted" id="cq-res"></p>
+      <h3>Activos ubicados en este croquis</h3>
+      <div class="tablewrap"><table id="tbl-cq"></table></div>
+    </div>
+  </div>
+  <div class="card noprint">
+    <h2>Activos vigentes sin ubicar en ningún croquis</h2>
+    <div id="cq-sin"></div>
   </div>
 </section>
 
@@ -443,7 +515,7 @@ ol.steps li{margin-bottom:6px}
     <p>La información vive solo en este navegador. Descargue un respaldo después de cada sesión de trabajo y guárdelo en un lugar seguro (contiene datos fiscales).</p>
     <div class="row">
       <button class="btn" onclick="descargarRespaldo()">Descargar respaldo (JSON)</button>
-      <label class="btn sec" style="display:inline-block;margin:0;color:var(--accent)">Restaurar respaldo<input type="file" accept=".json" onchange="restaurar(event)" class="hidden"></label>
+      <label class="btn sec" style="display:inline-block;margin:0">Restaurar respaldo<input type="file" accept=".json" onchange="restaurar(event)" class="hidden"></label>
       <button class="btn sec" onclick="cargarEjemplo()">Cargar datos de ejemplo</button>
       <button class="btn danger" onclick="borrarTodo()">Borrar todo</button>
     </div>
@@ -504,7 +576,8 @@ const VISITA = [
   {id:'a13', t:'Activos en poder de terceros documentados', d:'Contratos de comodato, arrendamiento o reparación, idealmente con fecha cierta.', f:'Soporte de la propiedad y del uso para generar ingresos', auto:'posesion'},
   {id:'a14', t:'IVA acreditado en adquisiciones soportado', d:'Trasladado expresamente, efectivamente pagado y relacionado con actividades gravadas.', f:'Art. 5 LIVA'},
   {id:'a15', t:'Poder del representante legal y personas designadas', d:'Identificaciones vigentes, poder notarial, personas que atenderán y testigos sugeridos.', f:'Art. 19 CFF; art. 44 CFF'},
-  {id:'a16', t:'Expediente digital organizado por activo', d:'Una carpeta por número de activo con CFDI, pago, póliza, pedimento, fotos, resguardo.', f:'Buenas prácticas / art. 30 CFF (conservación)'}
+  {id:'a16', t:'Expediente digital organizado por activo', d:'Una carpeta por número de activo con CFDI, pago, póliza, pedimento, fotos, resguardo.', f:'Buenas prácticas / art. 30 CFF (conservación)'},
+  {id:'a17', t:'Croquis de cada planta con la ubicación de los activos', d:'Permite planear el recorrido, ubicar rápido cualquier bien que pidan los visitadores y verificar que cada domicilio con activos esté registrado.', f:'Control interno / apoyo al recorrido (art. 45 CFF)', auto:'croquis'}
  ]},
  {g:'B. Durante la visita', items:[
   {id:'b1', t:'Revisar la orden de visita', d:'Nombre del contribuyente, domicilio, ejercicio y contribuciones, nombres de visitadores, firma del funcionario competente.', f:'Arts. 38 y 43 CFF'},
@@ -528,7 +601,7 @@ const VISITA = [
 /* ===================== Estado ===================== */
 const KEY='activosFijos.v1';
 let S = cargar();
-function vacio(){return {config:{tope:175000,topeel:250000},activos:[],inpc:{},visita:{},sobrantes:[]};}
+function vacio(){return {config:{tope:175000,topeel:250000},activos:[],inpc:{},visita:{},sobrantes:[],croquis:[]};}
 function cargar(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return Object.assign(vacio(),o);}}catch(e){}return vacio();}
 function persistir(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){alert('No se pudo guardar en el navegador. Descargue un respaldo.');}}
 
@@ -546,7 +619,7 @@ function mesTxt(i){return MESES[i%12]+' '+Math.floor(i/12);}
 function tag(cls,t){return `<span class="tag ${cls}">${esc(t)}</span>`;}
 
 /* ===================== Navegación ===================== */
-const TABS=[['inicio','Inicio'],['config','Configuración'],['activos','Activos'],['inpc','INPC'],['dep','Depreciación'],['conteo','Conteo físico'],['alertas','Alertas'],['visita','Visita domiciliaria'],['guia','Guía'],['respaldo','Respaldo']];
+const TABS=[['inicio','Inicio'],['config','Configuración'],['activos','Activos'],['inpc','INPC'],['dep','Depreciación'],['conteo','Conteo físico'],['croquis','Croquis de planta'],['alertas','Alertas'],['visita','Visita domiciliaria'],['guia','Guía'],['respaldo','Respaldo']];
 function nav(){ $('nav').innerHTML=TABS.map(([k,n])=>`<button data-k="${k}" onclick="ir('${k}')">${n}</button>`).join(''); }
 function ir(k){
   document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+k));
@@ -555,7 +628,7 @@ function ir(k){
   render(k); window.scrollTo(0,0);
 }
 function render(k){
-  ({inicio:renderInicio,config:renderConfig,activos:renderActivos,inpc:renderINPC,dep:renderDep,conteo:renderConteo,alertas:renderAlertas,visita:renderVisita,guia:renderGuia})[k]?.();
+  ({inicio:renderInicio,config:renderConfig,activos:renderActivos,inpc:renderINPC,dep:renderDep,conteo:renderConteo,croquis:renderCroquis,alertas:renderAlertas,visita:renderVisita,guia:renderGuia})[k]?.();
 }
 function imprimir(id){document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('printme',s.id===id));window.print();}
 
@@ -588,7 +661,7 @@ function guardarActivo(){
   if(old)Object.assign(old,a);else S.activos.push(a);
   persistir();$('a-msg').innerHTML=tag('t-ok','Guardado ✓');limpiarForm();renderActivos();setTimeout(()=>$('a-msg').innerHTML='',2000);
 }
-function eliminar(id){const a=S.activos.find(x=>x.id===id);if(!a||!confirm('¿Eliminar el activo '+a.numero+'? Si se dio de baja, es preferible registrar la baja en lugar de eliminarlo.'))return;S.activos=S.activos.filter(x=>x.id!==id);persistir();renderActivos();}
+function eliminar(id){const a=S.activos.find(x=>x.id===id);if(!a||!confirm('¿Eliminar el activo '+a.numero+'? Si se dio de baja, es preferible registrar la baja en lugar de eliminarlo.'))return;S.activos=S.activos.filter(x=>x.id!==id);S.croquis.forEach(c=>c.pins=c.pins.filter(p=>p.a!==id));persistir();renderActivos();}
 function renderActivos(){
   const q=($('buscar').value||'').toLowerCase(),f=$('filtro').value;
   const rows=S.activos.filter(a=>{
@@ -757,6 +830,7 @@ function autoEstado(code){
     case 'bajas':{const b=S.activos.filter(a=>a.estatus==='baja');return b.length?pct(a=>a.evbaja&&a.fbaja,b)+'% de bajas con evidencia':'Sin bajas registradas';}
     case 'pedimento':{const i=S.activos.filter(a=>a.origen!=='nacional');return i.length?pct(a=>a.pedimento,i)+'% importados con pedimento':'Sin activos importados';}
     case 'immex':{const i=A.filter(a=>a.origen==='import_temp');return i.length?pct(a=>a.a24==='si'&&a.domimmex==='si',i)+'% temporales controlados':'Sin temporales';}
+    case 'croquis':{if(!S.croquis.length)return 'Sin croquis cargados';return pct(a=>croquisDe(a.id))+'% de activos ubicados en croquis';}
     case 'posesion':{const i=A.filter(a=>a.posesion&&a.posesion!=='propio');return i.length?pct(a=>a.docs?.contrato,i)+'% con contrato':'Ninguno con terceros';}
   }return null;
 }
@@ -777,6 +851,104 @@ function setV(id,k,v){S.visita[id]=S.visita[id]||{};S.visita[id][k]=v;persistir(
 /* ===================== Guía ===================== */
 function renderGuia(){$('tbl-tasas').innerHTML='<tr><th>Bien</th><th class="num">Tasa máx.</th><th>Fundamento</th></tr>'+CATEGORIAS.filter(c=>!['otro'].includes(c.k)).map(c=>`<tr><td>${esc(c.n)}</td><td class="num">${c.t}%</td><td class="small">${esc(c.f)} ${tag('t-warn','verificar vigencia')}</td></tr>`).join('');}
 
+/* ===================== Croquis ===================== */
+/* Las imágenes van en IndexedDB (localStorage es muy pequeño para planos); los puntos, en S.croquis */
+const IDB=(()=>{let dbp=null;const mem={};
+  const open=()=>dbp||(dbp=new Promise((res,rej)=>{try{const r=indexedDB.open('activosFijosDB',1);r.onupgradeneeded=()=>r.result.createObjectStore('croquis');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}}));
+  const tx=(mode,fn)=>open().then(db=>new Promise((res,rej)=>{const t=db.transaction('croquis',mode);const q=fn(t.objectStore('croquis'));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error);}));
+  return {get:k=>tx('readonly',s=>s.get(k)).catch(()=>mem[k]),put:(k,v)=>tx('readwrite',s=>s.put(v,k)).catch(()=>{mem[k]=v;alert('El navegador no permite guardar imágenes de forma permanente; el croquis se perderá al cerrar. Descargue un respaldo.');}),del:k=>tx('readwrite',s=>s.delete(k)).catch(()=>{delete mem[k];}),clear:()=>tx('readwrite',s=>s.clear()).catch(()=>{})};
+})();
+let cqSel=null,cqPop=null;
+const cqActual=()=>S.croquis.find(c=>c.id===cqSel);
+function croquisDe(aid){return S.croquis.find(c=>c.pins.some(p=>p.a===aid));}
+function leerImagen(file){return new Promise((res,rej)=>{
+  if(!file)return rej('Seleccione un archivo de imagen.');
+  if(!/^image\/(png|jpeg|webp|gif)$/.test(file.type))return rej('Formato no soportado. Si su croquis está en PDF o DWG, expórtelo como PNG o JPG (o tome una captura de pantalla).');
+  const rd=new FileReader();rd.onerror=()=>rej('No se pudo leer el archivo.');
+  rd.onload=()=>{const im=new Image();im.onerror=()=>rej('La imagen no es válida.');im.onload=()=>{
+    const MAX=3200,big=Math.max(im.width,im.height);
+    if(big<=MAX&&file.size<=4e6)return res({src:rd.result,w:im.width,h:im.height});
+    const k=Math.min(1,MAX/big),cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);
+    const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height);
+    res({src:cv.toDataURL('image/jpeg',0.9),w:cv.width,h:cv.height});};im.src=rd.result;};
+  rd.readAsDataURL(file);});}
+async function cargarCroquis(){
+  const nombre=$('cq-nombre').value.trim();
+  if(!nombre){$('cq-msg').innerHTML=tag('t-bad','Capture el nombre del croquis');return;}
+  try{
+    const img=await leerImagen($('cq-file').files[0]);
+    const c={id:uid(),nombre,dom:$('cq-dom').value.trim(),ver:$('cq-ver').value.trim(),fecha:new Date().toISOString().slice(0,10),w:img.w,h:img.h,pins:[]};
+    await IDB.put(c.id,img.src);S.croquis.push(c);persistir();cqSel=c.id;
+    ['cq-nombre','cq-dom','cq-ver','cq-file'].forEach(i=>$(i).value='');
+    $('cq-msg').innerHTML=tag('t-ok','Croquis cargado ✓');$('cq-modo').value='colocar';renderCroquis();
+  }catch(e){$('cq-msg').innerHTML=tag('t-bad',String(e));}
+}
+async function reemplazarImagen(ev){const c=cqActual();if(!c)return;try{const img=await leerImagen(ev.target.files[0]);if(c.pins.length&&!confirm('Los puntos ya colocados conservan su posición relativa. Si el nuevo plano tiene otra escala o encuadre, tendrá que reubicarlos. ¿Continuar?'))return;await IDB.put(c.id,img.src);c.w=img.w;c.h=img.h;persistir();renderCroquis();}catch(e){alert(e);}ev.target.value='';}
+function editarCroquisMeta(){const c=cqActual();if(!c)return;const n=prompt('Nombre del croquis',c.nombre);if(n===null)return;const d=prompt('Domicilio',c.dom||'');const v=prompt('Fecha / versión',c.ver||'');c.nombre=n.trim()||c.nombre;if(d!==null)c.dom=d.trim();if(v!==null)c.ver=v.trim();persistir();renderCroquis();}
+function eliminarCroquis(){const c=cqActual();if(!c||!confirm('¿Eliminar el croquis «'+c.nombre+'» y sus '+c.pins.length+' puntos? Los activos no se borran.'))return;IDB.del(c.id);S.croquis=S.croquis.filter(x=>x.id!==c.id);cqSel=null;persistir();renderCroquis();}
+function estadoPin(a){if(a.estatus==='baja')return 'p-baja';return {localizado:'p-ok',no_localizado:'p-bad'}[a.conteo?.estado]||'p-pend';}
+async function renderCroquis(){
+  if(!S.croquis.some(c=>c.id===cqSel))cqSel=S.croquis[0]?.id||null;
+  $('cq-lista').innerHTML=S.croquis.map(c=>`<button class="btn sec ${c.id===cqSel?'on':''}" onclick="cqSel='${c.id}';cqPop=null;renderCroquis()">${esc(c.nombre)} <span class="small muted">(${c.pins.length})</span></button>`).join('');
+  const c=cqActual();
+  $('cq-vacio').classList.toggle('hidden',!!c);$('cq-cont').classList.toggle('hidden',!c);
+  const vig=S.activos.filter(a=>a.estatus!=='baja'),sin=vig.filter(a=>!croquisDe(a.id));
+  $('cq-sin').innerHTML=!S.activos.length?'<p class="muted">No hay activos registrados.</p>':sin.length?`<p class="small muted">${sin.length} de ${vig.length} activos vigentes.</p><div class="tablewrap"><table><tr><th>No.</th><th>Descripción</th><th>Ubicación capturada</th></tr>${sin.map(a=>`<tr><td>${esc(a.numero)}</td><td>${esc(a.descripcion)}</td><td>${esc(a.ubicacion)}</td></tr>`).join('')}</table></div>`:'<p>'+tag('t-ok','Todos los activos vigentes están ubicados en un croquis')+'</p>';
+  if(!c)return;
+  $('cq-titulo').textContent=c.nombre;
+  $('cq-sub').textContent=[c.dom&&'Domicilio: '+c.dom,c.ver&&'Versión: '+c.ver,'Cargado: '+c.fecha].filter(Boolean).join(' · ');
+  const modo=$('cq-modo').value;
+  $('cq-selwrap').classList.toggle('hidden',modo!=='colocar');
+  if(modo==='colocar'){
+    const prev=$('cq-activo').value;
+    const pend=vig.filter(a=>!croquisDe(a.id)),aqui=S.activos.filter(a=>c.pins.some(p=>p.a===a.id)),otros=vig.filter(a=>{const k=croquisDe(a.id);return k&&k.id!==c.id;});
+    const opt=a=>`<option value="${a.id}">${esc(a.numero)} – ${esc(a.descripcion)}${a.ubicacion?' ('+esc(a.ubicacion)+')':''}</option>`;
+    $('cq-activo').innerHTML=`<option value="">${pend.length?'— Seleccione un activo —':'— Todos ubicados; elija uno para reubicar —'}</option>`+(pend.length?`<optgroup label="Sin ubicar (${pend.length})">${pend.map(opt).join('')}</optgroup>`:'')+(aqui.length?`<optgroup label="Ya en este croquis (reubicar)">${aqui.map(opt).join('')}</optgroup>`:'')+(otros.length?`<optgroup label="En otro croquis (mover aquí)">${otros.map(opt).join('')}</optgroup>`:'');
+    if(prev&&[...$('cq-activo').options].some(o=>o.value===prev)&&!c.pins.some(p=>p.a===prev))$('cq-activo').value=prev;
+    else $('cq-activo').value=pend[0]?.id||'';
+  }
+  const img=$('cq-img'),src=await IDB.get(c.id);
+  if(img.dataset.id!==c.id||img.getAttribute('src')!==src){img.src=src||'';img.dataset.id=c.id;}
+  const stage=$('cq-stage');stage.classList.toggle('colocar',modo==='colocar');
+  stage.querySelectorAll('.pin,.cq-pop').forEach(e=>e.remove());
+  const f=$('cq-filtro').value,etq=$('cq-etq').value==='si';
+  const filas=[];
+  c.pins.forEach(p=>{const a=S.activos.find(x=>x.id===p.a);if(!a)return;const st=estadoPin(a);
+    filas.push({a,st});
+    if(f==='pend'&&st!=='p-pend')return;if(f==='bad'&&st!=='p-bad')return;
+    const b=document.createElement('button');b.className='pin '+st+(cqPop===a.id?' sel':'');b.style.left=p.x+'%';b.style.top=p.y+'%';b.title=a.numero+' – '+a.descripcion;
+    b.innerHTML=etq?`<span>${esc(a.numero)}</span>`:'';
+    b.onclick=e=>{e.stopPropagation();cqPop=cqPop===a.id?null:a.id;renderCroquis();};
+    stage.appendChild(b);
+    if(cqPop===a.id){const d=document.createElement('div');d.className='cq-pop noprint';
+      d.style.left=Math.min(p.x,70)+'%';if(p.y>55){d.style.top=`calc(${p.y}% - 16px)`;d.style.transform='translateY(-100%)';}else d.style.top=`calc(${p.y}% + 16px)`;
+      const k=a.conteo||{};
+      d.innerHTML=`<b>${esc(a.numero)}</b> – ${esc(a.descripcion)}<div class="small muted">${esc(a.ubicacion||'Sin ubicación capturada')}${a.responsable?' · '+esc(a.responsable):''}${a.serie?' · Serie '+esc(a.serie):''}</div><div class="small" style="margin:4px 0">Conteo: ${k.estado==='localizado'?tag('t-ok','Localizado'):k.estado==='no_localizado'?tag('t-bad','No localizado'):tag('t-warn','Pendiente')} ${esc(k.fecha||'')}</div><div class="row"><button class="btn" onclick="pinConteo('${a.id}','localizado')">Localizado</button><button class="btn danger" onclick="pinConteo('${a.id}','no_localizado')">No localizado</button></div><div class="row" style="margin-top:6px"><button class="btn sec" onclick="editar('${a.id}')">Ver activo</button><button class="btn sec" onclick="quitarPin('${a.id}')">Quitar del croquis</button></div>`;
+      d.onclick=e=>e.stopPropagation();stage.appendChild(d);}
+  });
+  aplicarZoom();
+  const ok=filas.filter(x=>x.st==='p-ok').length,bad=filas.filter(x=>x.st==='p-bad').length,pe=filas.filter(x=>x.st==='p-pend').length;
+  $('cq-res').innerHTML=`${filas.length} activos en este croquis: ${ok} localizados · ${bad} no localizados · ${pe} pendientes.`+(modo==='colocar'?' <b>Haga clic en el croquis para colocar el activo seleccionado.</b>':' Haga clic en un punto para ver el activo y marcar el conteo.');
+  filas.sort((x,y)=>String(x.a.numero).localeCompare(String(y.a.numero),'es',{numeric:true}));
+  $('tbl-cq').innerHTML='<tr><th>No.</th><th>Descripción</th><th>Serie</th><th>Responsable</th><th>Conteo</th><th>Firma / observación</th></tr>'+(filas.length?filas.map(({a,st})=>`<tr><td>${esc(a.numero)}</td><td>${esc(a.descripcion)}</td><td>${esc(a.serie)}</td><td>${esc(a.responsable)}</td><td>${{'p-ok':tag('t-ok','Localizado'),'p-bad':tag('t-bad','No localizado'),'p-pend':tag('t-warn','Pendiente'),'p-baja':tag('t-info','Baja')}[st]}</td><td></td></tr>`).join(''):'<tr><td colspan="6" class="muted">Ningún activo colocado todavía. Cambie a modo «Colocar activos».</td></tr>');
+}
+function aplicarZoom(){$('cq-stage').style.width=$('cq-zoom').value+'%';}
+function clicCroquis(e){
+  const c=cqActual();if(!c)return;
+  if($('cq-modo').value!=='colocar'){if(cqPop){cqPop=null;renderCroquis();}return;}
+  const aid=$('cq-activo').value;if(!aid){alert('Seleccione en la lista el activo que quiere colocar o reubicar.');return;}
+  const r=$('cq-img').getBoundingClientRect();
+  const x=Math.round((e.clientX-r.left)/r.width*10000)/100,y=Math.round((e.clientY-r.top)/r.height*10000)/100;
+  if(x<0||x>100||y<0||y>100)return;
+  const otro=croquisDe(aid);
+  if(otro&&otro.id!==c.id){if(!confirm('Este activo ya está ubicado en «'+otro.nombre+'». ¿Moverlo a este croquis?'))return;otro.pins=otro.pins.filter(p=>p.a!==aid);}
+  c.pins=c.pins.filter(p=>p.a!==aid);c.pins.push({a:aid,x,y});
+  const a=S.activos.find(z=>z.id===aid);if(a&&!a.ubicacion)a.ubicacion=c.nombre;
+  persistir();renderCroquis();
+}
+function quitarPin(aid){const c=cqActual();if(!c)return;c.pins=c.pins.filter(p=>p.a!==aid);cqPop=null;persistir();renderCroquis();}
+function pinConteo(aid,estado){const a=S.activos.find(x=>x.id===aid);if(!a)return;a.conteo=a.conteo||{};a.conteo.estado=estado;a.conteo.fecha=new Date().toISOString().slice(0,10);persistir();renderCroquis();}
+
 /* ===================== Inicio ===================== */
 function renderInicio(){
   const A=S.activos.filter(a=>a.estatus!=='baja');
@@ -795,9 +967,9 @@ function bajar(nombre,contenido,tipo){const b=new Blob([contenido],{type:tipo});
 function exportCSV(){const H=[...AF,...DOCS.map(d=>'doc_'+d.k),'conteo_estado','conteo_fecha','conteo_obs'];const L=S.activos.map(a=>[...AF.map(k=>a[k]),...DOCS.map(d=>a.docs?.[d.k]?'si':'no'),a.conteo?.estado,a.conteo?.fecha,a.conteo?.obs]);bajar('registro_activos_fijos.csv',toCSV(H,L),'text/csv');}
 function parseCSV(t){t=t.replace(/^﻿/,'');const rows=[];let r=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}else if(c==='"')q=true;else if(c===','){r.push(f);f='';}else if(c==='\n'){r.push(f);rows.push(r);r=[];f='';}else if(c!=='\r')f+=c;}if(f||r.length){r.push(f);rows.push(r);}return rows;}
 function importarCSV(ev){const file=ev.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{const rows=parseCSV(rd.result);const H=rows.shift().map(h=>h.trim());let n=0,dup=0;rows.forEach(r=>{if(r.every(x=>!x.trim()))return;const o={};H.forEach((h,i)=>o[h]=r[i]??'');if(!o.numero)return;if(S.activos.some(a=>a.numero===o.numero)){dup++;return;}const a={id:uid(),docs:{},conteo:{}};AF.forEach(k=>{const v=(o[k]||'').trim();a[k]=NUMF.includes(k)?(v===''?null:Number(v)):v;});if(!a.categoria)a.categoria='otro';if(!a.origen)a.origen='nacional';if(!a.estatus)a.estatus='activo';DOCS.forEach(d=>a.docs[d.k]=o['doc_'+d.k]==='si');if(o.conteo_estado)a.conteo={estado:o.conteo_estado,fecha:o.conteo_fecha,obs:o.conteo_obs};S.activos.push(a);n++;});persistir();$('r-msg').innerHTML=tag('t-ok',`${n} activos importados`)+(dup?' '+tag('t-warn',`${dup} omitidos por número duplicado`):'');ev.target.value='';};rd.readAsText(file,'utf-8');}
-function descargarRespaldo(){bajar('respaldo_activos_fijos_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(S,null,1),'application/json');}
-function restaurar(ev){const file=ev.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const o=JSON.parse(rd.result);if(!Array.isArray(o.activos))throw 0;if(!confirm('Esto reemplazará la información actual. ¿Continuar?'))return;S=Object.assign(vacio(),o);persistir();alert('Respaldo restaurado.');ir('inicio');}catch(e){alert('Archivo no válido.');}};rd.readAsText(file);ev.target.value='';}
-function borrarTodo(){if(confirm('¿Borrar TODA la información de este navegador? Descargue antes un respaldo.')){S=vacio();persistir();ir('inicio');}}
+async function descargarRespaldo(){const imgs={};for(const c of S.croquis){const d=await IDB.get(c.id);if(d)imgs[c.id]=d;}bajar('respaldo_activos_fijos_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(Object.assign({},S,{croquisImagenes:imgs})),'application/json');}
+function restaurar(ev){const file=ev.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const o=JSON.parse(rd.result);if(!Array.isArray(o.activos))throw 0;if(!confirm('Esto reemplazará la información actual. ¿Continuar?'))return;const imgs=o.croquisImagenes||{};delete o.croquisImagenes;S=Object.assign(vacio(),o);persistir();IDB.clear().then(()=>Promise.all(Object.entries(imgs).map(([k,v])=>IDB.put(k,v)))).then(()=>{alert('Respaldo restaurado.');ir('inicio');});}catch(e){alert('Archivo no válido.');}};rd.readAsText(file);ev.target.value='';}
+function borrarTodo(){if(confirm('¿Borrar TODA la información de este navegador? Descargue antes un respaldo.')){S=vacio();persistir();IDB.clear();ir('inicio');}}
 function cargarEjemplo(){
   if(S.activos.length&&!confirm('Se agregarán activos de ejemplo (ficticios) a su registro. ¿Continuar?'))return;
   const ej=[
@@ -811,7 +983,7 @@ function cargarEjemplo(){
 }
 
 /* ===================== Arranque ===================== */
-nav();initForm();
+nav();initForm();$('cq-stage').addEventListener('click',clicCroquis);
 $('d-ej').value=(S.config.ejercicios&&/^\d{4}/.test(S.config.ejercicios))?S.config.ejercicios.slice(0,4):new Date().getFullYear()-1;
 let t0='inicio';try{t0=localStorage.getItem(KEY+'.tab')||'inicio';}catch(e){}
 ir(TABS.some(t=>t[0]===t0)?t0:'inicio');

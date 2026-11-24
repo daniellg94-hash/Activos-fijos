@@ -5,7 +5,7 @@ Herramienta web de un solo archivo (`index.html`) para llevar el control del inv
 ## Cómo abrirla
 1. Descargue `index.html`.
 2. Ábralo con doble clic en Chrome, Edge o Firefox. No requiere instalación ni internet.
-3. Los datos se guardan **solo en ese navegador**. Use la pestaña **Respaldo** para descargar un archivo JSON después de cada sesión.
+3. Los datos se guardan **solo en ese navegador** (los croquis, en su almacenamiento interno IndexedDB). Use la pestaña **Respaldo** para descargar un archivo JSON después de cada sesión; el respaldo incluye las imágenes de los croquis.
 
 ## Módulos
 | Pestaña | Para qué sirve |
@@ -16,6 +16,7 @@ Herramienta web de un solo archivo (`index.html`) para llevar el control del inv
 | INPC | Captura de INPC oficial (no viene precargado para no usar datos sin verificar). |
 | Depreciación | Cédula de deducción de inversiones del ejercicio: meses completos, límite al MOI, factor de actualización (art. 31 LISR, art. 17-A CFF) y comparación contra lo declarado. |
 | Conteo físico | Hoja de inventario por ubicación, localizados / no localizados y bienes sobrantes. |
+| Croquis de planta | Carga de croquis o planos (PNG/JPG) por planta, nave o bodega; ubicación de cada activo con un punto sobre el plano; marcado de localizado / no localizado durante el recorrido (se refleja en el conteo); impresión del croquis con su lista. |
 | Alertas | Hallazgos automáticos por activo (sin CFDI, sin pedimento, efectivo, sin evidencia de inicio de uso, temporales IMMEX sin control, bajas sin soporte, etc.). |
 | Visita domiciliaria | Checklist antes / durante / después, con fundamento, notas y referencia del plazo de 20 días hábiles (art. 46 fr. IV CFF). |
 | Guía | Explicación de la visita, conceptos (MOI, depreciación contable vs. fiscal), tasas, derechos del contribuyente, errores frecuentes y temas IMMEX. |
