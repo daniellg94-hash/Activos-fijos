@@ -75,6 +75,19 @@ details summary{cursor:pointer;font-weight:600}
 .progress > div{height:100%;background:var(--ok)}
 ol.steps li{margin-bottom:6px}
 .hidden{display:none}
+.fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:10px}
+.foto{border:1px solid var(--line);border-radius:8px;padding:6px;background:var(--bg);font-size:12px}
+.foto img{width:100%;height:120px;object-fit:cover;border-radius:5px;cursor:zoom-in;display:block;margin-bottom:5px}
+.foto select{font-size:12px;padding:4px}
+.thumb{width:46px;height:46px;object-fit:cover;border-radius:5px;cursor:zoom-in;border:1px solid var(--line);display:block}
+.lb.hidden{display:none}
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;cursor:zoom-out}
+.lb img{max-width:100%;max-height:84vh;object-fit:contain;border-radius:4px}
+.lb div{color:#fff;margin-top:10px;font-size:14px;text-align:center}
+.ficha-fotos{display:flex;flex-wrap:wrap;gap:10px}
+.ficha-fotos figure{margin:0;width:calc(50% - 5px)}
+.ficha-fotos img{width:100%;max-height:340px;object-fit:contain;border:1px solid var(--line);border-radius:6px}
+.ficha-fotos figcaption{font-size:12px;color:var(--muted)}
 .cq-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--bg);max-height:75vh}
 .cq-stage{position:relative;display:inline-block;min-width:100%}
 .cq-stage img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
@@ -98,6 +111,7 @@ ol.steps li{margin-bottom:6px}
   .cq-stage{width:100%!important}
   .pin,.leg i{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #t-croquis .card{break-inside:auto}
+  .ficha-fotos figure{break-inside:avoid}
 }
 </style>
 </head>
@@ -219,6 +233,15 @@ ol.steps li{margin-bottom:6px}
     </fieldset>
     <fieldset><legend>5. Expediente documental (marque lo que SÍ tiene)</legend>
       <div class="form" id="a-docs"></div>
+    </fieldset>
+    <fieldset><legend>Fotografías del activo</legend>
+      <p class="help" style="margin-top:0">Recomendado: 1) vista general del bien en su ubicación, 2) placa o etiqueta con el número de activo, 3) número de serie. Las fotos son evidencia de existencia física (materialidad) y ayudan a localizar el bien durante el recorrido. En el celular, «Tomar foto» abre la cámara.</p>
+      <div class="row">
+        <label class="btn" style="display:inline-block;margin:0">Tomar foto<input type="file" accept="image/*" capture="environment" class="hidden" onchange="agregarFotos(event)"></label>
+        <label class="btn sec" style="display:inline-block;margin:0">Subir desde archivo<input type="file" accept="image/*" multiple class="hidden" onchange="agregarFotos(event)"></label>
+        <span id="f-msg" class="small"></span>
+      </div>
+      <div class="fotos" id="a-fotos"></div>
     </fieldset>
     <fieldset><legend>6. Baja (si aplica)</legend>
       <div class="form">
@@ -508,6 +531,10 @@ ol.steps li{margin-bottom:6px}
   </div>
 </section>
 
+<!-- ======================= FICHA (solo impresión) ======================= -->
+<section class="tab" id="t-ficha"><div class="card" id="ficha-cont"></div></section>
+<div class="lb hidden" id="lb" onclick="this.classList.add('hidden')"><img id="lb-img" alt="Fotografía del activo"><div id="lb-cap"></div></div>
+
 <!-- ======================= RESPALDO ======================= -->
 <section class="tab" id="t-respaldo">
   <div class="card">
@@ -577,7 +604,8 @@ const VISITA = [
   {id:'a14', t:'IVA acreditado en adquisiciones soportado', d:'Trasladado expresamente, efectivamente pagado y relacionado con actividades gravadas.', f:'Art. 5 LIVA'},
   {id:'a15', t:'Poder del representante legal y personas designadas', d:'Identificaciones vigentes, poder notarial, personas que atenderán y testigos sugeridos.', f:'Art. 19 CFF; art. 44 CFF'},
   {id:'a16', t:'Expediente digital organizado por activo', d:'Una carpeta por número de activo con CFDI, pago, póliza, pedimento, fotos, resguardo.', f:'Buenas prácticas / art. 30 CFF (conservación)'},
-  {id:'a17', t:'Croquis de cada planta con la ubicación de los activos', d:'Permite planear el recorrido, ubicar rápido cualquier bien que pidan los visitadores y verificar que cada domicilio con activos esté registrado.', f:'Control interno / apoyo al recorrido (art. 45 CFF)', auto:'croquis'}
+  {id:'a17', t:'Croquis de cada planta con la ubicación de los activos', d:'Permite planear el recorrido, ubicar rápido cualquier bien que pidan los visitadores y verificar que cada domicilio con activos esté registrado.', f:'Control interno / apoyo al recorrido (art. 45 CFF)', auto:'croquis'},
+  {id:'a18', t:'Fotografía de cada activo (vista general y placa / número de serie)', d:'Evidencia de existencia física y de identificación del bien; útil para responder requerimientos y para el recorrido.', f:'Materialidad de la operación / soporte de la deducción', auto:'fotos'}
  ]},
  {g:'B. Durante la visita', items:[
   {id:'b1', t:'Revisar la orden de visita', d:'Nombre del contribuyente, domicilio, ejercicio y contribuciones, nombres de visitadores, firma del funcionario competente.', f:'Arts. 38 y 43 CFF'},
@@ -647,8 +675,8 @@ function initForm(){
 }
 function onCategoria(){const c=cat($('a-categoria').value);$('a-tasa').value=c.t;$('a-cat-help').innerHTML=esc(c.f)+' '+tag('t-warn','verificar vigencia');}
 function onOrigen(){const o=$('a-origen').value;document.querySelectorAll('.ce').forEach(e=>e.classList.toggle('hidden',o==='nacional'));document.querySelectorAll('.temp').forEach(e=>e.classList.toggle('hidden',o!=='import_temp'));}
-function limpiarForm(){AF.forEach(k=>{const el=$('a-'+k);el.value=el.tagName==='SELECT'?el.options[0].value:'';});$('a-id').value='';DOCS.forEach(d=>$('doc-'+d.k).checked=false);$('f-titulo').textContent='Registrar activo';onCategoria();onOrigen();}
-function editar(id){const a=S.activos.find(x=>x.id===id);if(!a)return;AF.forEach(k=>{$('a-'+k).value=a[k]??'';});$('a-id').value=a.id;DOCS.forEach(d=>$('doc-'+d.k).checked=!!(a.docs||{})[d.k]);$('f-titulo').textContent='Editar activo '+a.numero;$('a-cat-help').innerHTML=esc(cat(a.categoria).f)+' '+tag('t-warn','verificar vigencia');onOrigen();ir('activos');}
+function limpiarForm(){AF.forEach(k=>{const el=$('a-'+k);el.value=el.tagName==='SELECT'?el.options[0].value:'';});$('a-id').value='';DOCS.forEach(d=>$('doc-'+d.k).checked=false);$('f-titulo').textContent='Registrar activo';fotosForm=[];renderFotosForm();onCategoria();onOrigen();}
+function editar(id){const a=S.activos.find(x=>x.id===id);if(!a)return;AF.forEach(k=>{$('a-'+k).value=a[k]??'';});$('a-id').value=a.id;DOCS.forEach(d=>$('doc-'+d.k).checked=!!(a.docs||{})[d.k]);$('f-titulo').textContent='Editar activo '+a.numero;$('a-cat-help').innerHTML=esc(cat(a.categoria).f)+' '+tag('t-warn','verificar vigencia');fotosForm=(a.fotos||[]).map(f=>({...f}));renderFotosForm();onOrigen();ir('activos');}
 function guardarActivo(){
   const a={id:$('a-id').value||uid()};
   AF.forEach(k=>{const v=$('a-'+k).value.trim();a[k]=NUMF.includes(k)?(v===''?null:Number(v)):v;});
@@ -658,10 +686,14 @@ function guardarActivo(){
   if(err.length){$('a-msg').innerHTML=tag('t-bad','Falta: '+err.join(', '));return;}
   if(S.activos.some(x=>x.numero===a.numero&&x.id!==a.id)){$('a-msg').innerHTML=tag('t-bad','Ya existe un activo con ese número');return;}
   const old=S.activos.find(x=>x.id===a.id);a.conteo=old?.conteo||{};
+  fotosForm.filter(f=>f.nuevo).forEach(f=>{IDB.put('foto:'+f.id,f.src);fotoCache[f.id]=f.src;});
+  (old?.fotos||[]).filter(f=>!fotosForm.some(x=>x.id===f.id)).forEach(f=>{IDB.del('foto:'+f.id);delete fotoCache[f.id];});
+  a.fotos=fotosForm.map(({id,tipo,fCarga,fArchivo})=>({id,tipo,fCarga,fArchivo}));
+  if(a.fotos.length)a.docs.foto=true;
   if(old)Object.assign(old,a);else S.activos.push(a);
   persistir();$('a-msg').innerHTML=tag('t-ok','Guardado ✓');limpiarForm();renderActivos();setTimeout(()=>$('a-msg').innerHTML='',2000);
 }
-function eliminar(id){const a=S.activos.find(x=>x.id===id);if(!a||!confirm('¿Eliminar el activo '+a.numero+'? Si se dio de baja, es preferible registrar la baja en lugar de eliminarlo.'))return;S.activos=S.activos.filter(x=>x.id!==id);S.croquis.forEach(c=>c.pins=c.pins.filter(p=>p.a!==id));persistir();renderActivos();}
+function eliminar(id){const a=S.activos.find(x=>x.id===id);if(!a||!confirm('¿Eliminar el activo '+a.numero+'? Si se dio de baja, es preferible registrar la baja en lugar de eliminarlo.'))return;(a.fotos||[]).forEach(f=>IDB.del('foto:'+f.id));S.activos=S.activos.filter(x=>x.id!==id);S.croquis.forEach(c=>c.pins=c.pins.filter(p=>p.a!==id));persistir();renderActivos();}
 function renderActivos(){
   const q=($('buscar').value||'').toLowerCase(),f=$('filtro').value;
   const rows=S.activos.filter(a=>{
@@ -669,8 +701,9 @@ function renderActivos(){
     if(f==='alertas'&&!alertas(a).length)return false;
     return !q||[a.numero,a.descripcion,a.ubicacion,a.responsable,a.uuid,a.serie,a.pedimento].join(' ').toLowerCase().includes(q);
   });
-  $('tbl-activos').innerHTML=`<tr><th>No.</th><th>Descripción</th><th>Categoría</th><th class="num">Tasa</th><th>Adquisición</th><th>Inicio uso</th><th class="num">MOI</th><th>Ubicación</th><th>Estatus</th><th>Alertas</th><th class="noprint"></th></tr>`+
-  (rows.length?rows.map(a=>{const al=alertas(a);return `<tr><td>${esc(a.numero)}</td><td>${esc(a.descripcion)}</td><td class="small">${esc(cat(a.categoria).n)}</td><td class="num">${a.tasa??'—'}%</td><td>${esc(a.fadq)}</td><td>${esc(a.fuso)}</td><td class="num">${fmt(a.moi)}</td><td>${esc(a.ubicacion)}</td><td>${a.estatus==='baja'?tag('t-info','Baja'):tag('t-ok','Activo')}</td><td>${al.length?tag(al.some(x=>x.s==='bad')?'t-bad':'t-warn',al.length+' alerta(s)'):tag('t-ok','OK')}</td><td class="noprint" style="white-space:nowrap"><button class="btn sec" onclick="editar('${a.id}')">Editar</button> <button class="btn danger" onclick="eliminar('${a.id}')">×</button></td></tr>`;}).join(''):`<tr><td colspan="11" class="muted">Sin activos. Registre el primero arriba o cargue datos de ejemplo en «Respaldo».</td></tr>`);
+  $('tbl-activos').innerHTML=`<tr><th>Foto</th><th>No.</th><th>Descripción</th><th>Categoría</th><th class="num">Tasa</th><th>Adquisición</th><th>Inicio uso</th><th class="num">MOI</th><th>Ubicación</th><th>Estatus</th><th>Alertas</th><th class="noprint"></th></tr>`+
+  (rows.length?rows.map(a=>{const al=alertas(a);return `<tr><td>${thumbHTML(a)}</td><td>${esc(a.numero)}</td><td>${esc(a.descripcion)}</td><td class="small">${esc(cat(a.categoria).n)}</td><td class="num">${a.tasa??'—'}%</td><td>${esc(a.fadq)}</td><td>${esc(a.fuso)}</td><td class="num">${fmt(a.moi)}</td><td>${esc(a.ubicacion)}</td><td>${a.estatus==='baja'?tag('t-info','Baja'):tag('t-ok','Activo')}</td><td>${al.length?tag(al.some(x=>x.s==='bad')?'t-bad':'t-warn',al.length+' alerta(s)'):tag('t-ok','OK')}</td><td class="noprint" style="white-space:nowrap"><button class="btn sec" onclick="editar('${a.id}')">Editar</button> <button class="btn sec" onclick="fichaActivo('${a.id}')">Ficha</button> <button class="btn danger" onclick="eliminar('${a.id}')">×</button></td></tr>`;}).join(''):`<tr><td colspan="12" class="muted">Sin activos. Registre el primero arriba o cargue datos de ejemplo en «Respaldo».</td></tr>`);
+  cargarThumbs($('tbl-activos'));
   const tot=S.activos.filter(a=>a.estatus!=='baja').reduce((s,a)=>s+(a.moi||0),0);
   let t=`MOI total de activos vigentes en el registro: <b>${fmt(tot)}</b>.`;
   if(S.config.saldo!=null){const d=tot-S.config.saldo;t+=` Saldo en balanza: <b>${fmt(S.config.saldo)}</b>. Diferencia: <b>${fmt(d)}</b> ${Math.abs(d)<1?tag('t-ok','conciliado'):tag('t-bad','por conciliar')}`;}
@@ -703,7 +736,8 @@ function alertas(a){
   if(!a.ubicacion)add('warn','Sin ubicación física','Control de inventario');
   if(!a.responsable)add('warn','Sin responsable / resguardante','Control interno');
   if(!d.etiqueta)add('warn','Sin etiqueta física confirmada','Control de inventario');
-  if(!d.foto)add('warn','Sin fotografía fechada (evidencia de existencia)','Materialidad');
+  if(!(a.fotos||[]).length)add('warn',d.foto?'Fotografía marcada en expediente pero no cargada en la herramienta':'Sin fotografía (evidencia de existencia física)','Materialidad');
+  else if(!a.fotos.some(f=>/placa|serie/i.test(f.tipo)))add('info','Agregue foto de la placa/etiqueta o del número de serie para identificar el bien sin duda','Identificación del activo');
   if(a.estatus!=='baja'&&a.conteo?.estado!=='localizado')add(a.conteo?.estado==='no_localizado'?'bad':'warn',a.conteo?.estado==='no_localizado'?'NO localizado en conteo físico: investigar (¿baja no registrada?)':'Pendiente de verificar en conteo físico','Materialidad / art. 31 LISR');
   if(a.posesion&&a.posesion!=='propio'&&!d.contrato)add('warn','Activo en poder de terceros sin contrato en expediente','Soporte de propiedad y uso');
   if(a.estatus==='baja'){
@@ -830,6 +864,7 @@ function autoEstado(code){
     case 'bajas':{const b=S.activos.filter(a=>a.estatus==='baja');return b.length?pct(a=>a.evbaja&&a.fbaja,b)+'% de bajas con evidencia':'Sin bajas registradas';}
     case 'pedimento':{const i=S.activos.filter(a=>a.origen!=='nacional');return i.length?pct(a=>a.pedimento,i)+'% importados con pedimento':'Sin activos importados';}
     case 'immex':{const i=A.filter(a=>a.origen==='import_temp');return i.length?pct(a=>a.a24==='si'&&a.domimmex==='si',i)+'% temporales controlados':'Sin temporales';}
+    case 'fotos':return pct(a=>(a.fotos||[]).length)+'% de activos vigentes con foto';
     case 'croquis':{if(!S.croquis.length)return 'Sin croquis cargados';return pct(a=>croquisDe(a.id))+'% de activos ubicados en croquis';}
     case 'posesion':{const i=A.filter(a=>a.posesion&&a.posesion!=='propio');return i.length?pct(a=>a.docs?.contrato,i)+'% con contrato':'Ninguno con terceros';}
   }return null;
@@ -851,6 +886,39 @@ function setV(id,k,v){S.visita[id]=S.visita[id]||{};S.visita[id][k]=v;persistir(
 /* ===================== Guía ===================== */
 function renderGuia(){$('tbl-tasas').innerHTML='<tr><th>Bien</th><th class="num">Tasa máx.</th><th>Fundamento</th></tr>'+CATEGORIAS.filter(c=>!['otro'].includes(c.k)).map(c=>`<tr><td>${esc(c.n)}</td><td class="num">${c.t}%</td><td class="small">${esc(c.f)} ${tag('t-warn','verificar vigencia')}</td></tr>`).join('');}
 
+/* ===================== Fotografías de activos ===================== */
+/* Imágenes en IndexedDB con llave 'foto:<id>'; en el activo solo se guarda la lista (tipo y fechas) */
+const TIPOS_FOTO=['Vista general','Placa / etiqueta de activo','Número de serie','Estado / daños','Ubicación','Otra'];
+let fotosForm=[];const fotoCache={};
+async function fotoSrc(id){if(!(id in fotoCache)){const v=await IDB.get('foto:'+id);if(v)fotoCache[id]=v;}return fotoCache[id];}
+async function agregarFotos(ev){
+  const files=[...ev.target.files];ev.target.value='';let ok=0;
+  for(const file of files){
+    try{const img=await leerImagen(file,1600,1.2e6,'foto');
+      fotosForm.push({id:uid(),tipo:TIPOS_FOTO[Math.min(fotosForm.length,2)],fCarga:new Date().toISOString().slice(0,10),fArchivo:file.lastModified?new Date(file.lastModified).toISOString().slice(0,10):'',src:img.src,nuevo:true});ok++;
+    }catch(e){$('f-msg').innerHTML=tag('t-bad',String(e));}
+  }
+  if(ok){$('doc-foto').checked=true;$('f-msg').innerHTML=tag('t-warn',ok+' foto(s) agregada(s): guarde el activo para conservarlas');}
+  renderFotosForm();
+}
+async function renderFotosForm(){
+  const box=$('a-fotos');
+  box.innerHTML=fotosForm.length?fotosForm.map((f,i)=>`<div class="foto"><img data-i="${i}" alt="Foto ${i+1}" onclick="verFoto(this.src,fotosForm[${i}].tipo)"><select onchange="fotosForm[${i}].tipo=this.value">${TIPOS_FOTO.map(t=>`<option ${t===f.tipo?'selected':''}>${t}</option>`).join('')}</select><div class="muted" style="margin:3px 0">Cargada: ${esc(f.fCarga)}${f.fArchivo?'<br>Fecha del archivo: '+esc(f.fArchivo):''}</div><button class="btn danger" style="padding:3px 8px;font-size:12px" onclick="quitarFoto(${i})">Quitar</button></div>`).join(''):'<p class="muted small">Sin fotografías.</p>';
+  for(const im of box.querySelectorAll('img[data-i]')){const f=fotosForm[im.dataset.i];im.src=f.src||await fotoSrc(f.id)||'';}
+}
+function quitarFoto(i){if(!confirm('¿Quitar esta foto? Se eliminará al guardar el activo.'))return;fotosForm.splice(i,1);renderFotosForm();}
+function verFoto(src,cap){if(!src)return;$('lb-img').src=src;$('lb-cap').textContent=cap||'';$('lb').classList.remove('hidden');}
+function thumbHTML(a){const f=(a.fotos||[])[0];return f?`<img class="thumb" data-foto="${f.id}" alt="${esc(a.numero+' – '+f.tipo)}" onclick="event.stopPropagation();verFoto(this.src,this.alt)">`:'<span class="small muted">—</span>';}
+async function cargarThumbs(root){for(const im of root.querySelectorAll('img[data-foto]')){const v=await fotoSrc(im.dataset.foto);if(v)im.src=v;}}
+async function fichaActivo(id){
+  const a=S.activos.find(x=>x.id===id);if(!a)return;const d=a.docs||{},c=croquisDe(a.id);
+  const filas=[['No. de activo',a.numero],['Descripción',a.descripcion],['Marca / modelo / serie',[a.marca,a.modelo,a.serie].filter(Boolean).join(' / ')],['Categoría fiscal',cat(a.categoria).n+' – tasa '+(a.tasa??'—')+'%'],['Fecha de adquisición',a.fadq],['Fecha de inicio de uso',a.fuso],['MOI',fmt(a.moi)],['CFDI (UUID)',a.uuid],['Proveedor',[a.proveedor,a.rfcprov].filter(Boolean).join(' – ')],['Forma de pago',a.fpago],['Cuenta / póliza',[a.cuenta,a.poliza].filter(Boolean).join(' / ')],['Origen',{nacional:'Adquisición nacional',import_def:'Importación definitiva',import_temp:'Importación temporal IMMEX'}[a.origen]||''],['Pedimento',a.pedimento],['Ubicación',a.ubicacion+(c?' (croquis: '+c.nombre+')':'')],['Responsable',a.responsable],['Estatus',a.estatus==='baja'?'Baja '+(a.fbaja||'')+' – '+(a.motivo||''):'Activo'],['Conteo físico',(a.conteo?.estado||'pendiente')+' '+(a.conteo?.fecha||'')]];
+  let fotos='';for(const f of a.fotos||[]){const src=await fotoSrc(f.id);if(src)fotos+=`<figure><img src="${src}" alt="${esc(f.tipo)}"><figcaption>${esc(f.tipo)} · cargada ${esc(f.fCarga)}${f.fArchivo?' · archivo '+esc(f.fArchivo):''}</figcaption></figure>`;}
+  $('ficha-cont').innerHTML=`<h2>Ficha de activo fijo ${esc(a.numero)}</h2><p class="small muted">${esc([S.config.razon,S.config.rfc,'Impresa '+new Date().toISOString().slice(0,10)].filter(Boolean).join(' · '))}</p><div class="tablewrap"><table>${filas.map(([k,v])=>`<tr><th style="width:32%">${k}</th><td>${esc(v||'—')}</td></tr>`).join('')}<tr><th>Expediente</th><td>${DOCS.map(x=>(d[x.k]?'☑ ':'☐ ')+esc(x.n)).join('<br>')}</td></tr></table></div><h3>Fotografías</h3>${fotos?`<div class="ficha-fotos">${fotos}</div>`:'<p class="muted">Sin fotografías cargadas.</p>'}`;
+  await Promise.all([...$('ficha-cont').querySelectorAll('img')].map(im=>im.complete?0:new Promise(r=>{im.onload=im.onerror=r;})));
+  imprimir('t-ficha');
+}
+
 /* ===================== Croquis ===================== */
 /* Las imágenes van en IndexedDB (localStorage es muy pequeño para planos); los puntos, en S.croquis */
 const IDB=(()=>{let dbp=null;const mem={};
@@ -861,13 +929,14 @@ const IDB=(()=>{let dbp=null;const mem={};
 let cqSel=null,cqPop=null;
 const cqActual=()=>S.croquis.find(c=>c.id===cqSel);
 function croquisDe(aid){return S.croquis.find(c=>c.pins.some(p=>p.a===aid));}
-function leerImagen(file){return new Promise((res,rej)=>{
+function leerImagen(file,MAX=3200,maxBytes=4e6,tipo='croquis'){return new Promise((res,rej)=>{
   if(!file)return rej('Seleccione un archivo de imagen.');
-  if(!/^image\/(png|jpeg|webp|gif)$/.test(file.type))return rej('Formato no soportado. Si su croquis está en PDF o DWG, expórtelo como PNG o JPG (o tome una captura de pantalla).');
+  const nativo=/^image\/(png|jpeg|webp|gif)$/.test(file.type);
+  if(!nativo&&!/^image\/(heic|heif)$/.test(file.type))return rej(tipo==='croquis'?'Formato no soportado. Si su croquis está en PDF o DWG, expórtelo como PNG o JPG (o tome una captura de pantalla).':'Formato no soportado: use JPG o PNG.');
   const rd=new FileReader();rd.onerror=()=>rej('No se pudo leer el archivo.');
-  rd.onload=()=>{const im=new Image();im.onerror=()=>rej('La imagen no es válida.');im.onload=()=>{
-    const MAX=3200,big=Math.max(im.width,im.height);
-    if(big<=MAX&&file.size<=4e6)return res({src:rd.result,w:im.width,h:im.height});
+  rd.onload=()=>{const im=new Image();im.onerror=()=>rej(nativo?'La imagen no es válida.':'Este navegador no puede leer fotos HEIC. En el iPhone use Ajustes › Cámara › Formatos › «Más compatible», o convierta la foto a JPG.');im.onload=()=>{
+    const big=Math.max(im.width,im.height);
+    if(nativo&&big<=MAX&&file.size<=maxBytes)return res({src:rd.result,w:im.width,h:im.height});
     const k=Math.min(1,MAX/big),cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);
     const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height);
     res({src:cv.toDataURL('image/jpeg',0.9),w:cv.width,h:cv.height});};im.src=rd.result;};
@@ -923,8 +992,8 @@ async function renderCroquis(){
     if(cqPop===a.id){const d=document.createElement('div');d.className='cq-pop noprint';
       d.style.left=Math.min(p.x,70)+'%';if(p.y>55){d.style.top=`calc(${p.y}% - 16px)`;d.style.transform='translateY(-100%)';}else d.style.top=`calc(${p.y}% + 16px)`;
       const k=a.conteo||{};
-      d.innerHTML=`<b>${esc(a.numero)}</b> – ${esc(a.descripcion)}<div class="small muted">${esc(a.ubicacion||'Sin ubicación capturada')}${a.responsable?' · '+esc(a.responsable):''}${a.serie?' · Serie '+esc(a.serie):''}</div><div class="small" style="margin:4px 0">Conteo: ${k.estado==='localizado'?tag('t-ok','Localizado'):k.estado==='no_localizado'?tag('t-bad','No localizado'):tag('t-warn','Pendiente')} ${esc(k.fecha||'')}</div><div class="row"><button class="btn" onclick="pinConteo('${a.id}','localizado')">Localizado</button><button class="btn danger" onclick="pinConteo('${a.id}','no_localizado')">No localizado</button></div><div class="row" style="margin-top:6px"><button class="btn sec" onclick="editar('${a.id}')">Ver activo</button><button class="btn sec" onclick="quitarPin('${a.id}')">Quitar del croquis</button></div>`;
-      d.onclick=e=>e.stopPropagation();stage.appendChild(d);}
+      d.innerHTML=`${(a.fotos||[]).length?`<img data-foto="${a.fotos[0].id}" alt="${esc(a.numero)}" style="width:100%;max-height:130px;object-fit:cover;border-radius:5px;cursor:zoom-in;margin-bottom:6px" onclick="verFoto(this.src,this.alt)">`:''}<b>${esc(a.numero)}</b> – ${esc(a.descripcion)}<div class="small muted">${esc(a.ubicacion||'Sin ubicación capturada')}${a.responsable?' · '+esc(a.responsable):''}${a.serie?' · Serie '+esc(a.serie):''}</div><div class="small" style="margin:4px 0">Conteo: ${k.estado==='localizado'?tag('t-ok','Localizado'):k.estado==='no_localizado'?tag('t-bad','No localizado'):tag('t-warn','Pendiente')} ${esc(k.fecha||'')}</div><div class="row"><button class="btn" onclick="pinConteo('${a.id}','localizado')">Localizado</button><button class="btn danger" onclick="pinConteo('${a.id}','no_localizado')">No localizado</button></div><div class="row" style="margin-top:6px"><button class="btn sec" onclick="editar('${a.id}')">Ver activo</button><button class="btn sec" onclick="quitarPin('${a.id}')">Quitar del croquis</button></div>`;
+      d.onclick=e=>e.stopPropagation();stage.appendChild(d);cargarThumbs(d);}
   });
   aplicarZoom();
   const ok=filas.filter(x=>x.st==='p-ok').length,bad=filas.filter(x=>x.st==='p-bad').length,pe=filas.filter(x=>x.st==='p-pend').length;
@@ -964,11 +1033,11 @@ function renderInicio(){
 /* ===================== CSV / Respaldo ===================== */
 function toCSV(H,L){const q=v=>{v=String(v??'');return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};return '﻿'+[H,...L].map(r=>r.map(q).join(',')).join('\n');}
 function bajar(nombre,contenido,tipo){const b=new Blob([contenido],{type:tipo});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=nombre;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);}
-function exportCSV(){const H=[...AF,...DOCS.map(d=>'doc_'+d.k),'conteo_estado','conteo_fecha','conteo_obs'];const L=S.activos.map(a=>[...AF.map(k=>a[k]),...DOCS.map(d=>a.docs?.[d.k]?'si':'no'),a.conteo?.estado,a.conteo?.fecha,a.conteo?.obs]);bajar('registro_activos_fijos.csv',toCSV(H,L),'text/csv');}
+function exportCSV(){const H=[...AF,...DOCS.map(d=>'doc_'+d.k),'conteo_estado','conteo_fecha','conteo_obs','num_fotos'];const L=S.activos.map(a=>[...AF.map(k=>a[k]),...DOCS.map(d=>a.docs?.[d.k]?'si':'no'),a.conteo?.estado,a.conteo?.fecha,a.conteo?.obs,(a.fotos||[]).length]);bajar('registro_activos_fijos.csv',toCSV(H,L),'text/csv');}
 function parseCSV(t){t=t.replace(/^﻿/,'');const rows=[];let r=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}else if(c==='"')q=true;else if(c===','){r.push(f);f='';}else if(c==='\n'){r.push(f);rows.push(r);r=[];f='';}else if(c!=='\r')f+=c;}if(f||r.length){r.push(f);rows.push(r);}return rows;}
 function importarCSV(ev){const file=ev.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{const rows=parseCSV(rd.result);const H=rows.shift().map(h=>h.trim());let n=0,dup=0;rows.forEach(r=>{if(r.every(x=>!x.trim()))return;const o={};H.forEach((h,i)=>o[h]=r[i]??'');if(!o.numero)return;if(S.activos.some(a=>a.numero===o.numero)){dup++;return;}const a={id:uid(),docs:{},conteo:{}};AF.forEach(k=>{const v=(o[k]||'').trim();a[k]=NUMF.includes(k)?(v===''?null:Number(v)):v;});if(!a.categoria)a.categoria='otro';if(!a.origen)a.origen='nacional';if(!a.estatus)a.estatus='activo';DOCS.forEach(d=>a.docs[d.k]=o['doc_'+d.k]==='si');if(o.conteo_estado)a.conteo={estado:o.conteo_estado,fecha:o.conteo_fecha,obs:o.conteo_obs};S.activos.push(a);n++;});persistir();$('r-msg').innerHTML=tag('t-ok',`${n} activos importados`)+(dup?' '+tag('t-warn',`${dup} omitidos por número duplicado`):'');ev.target.value='';};rd.readAsText(file,'utf-8');}
-async function descargarRespaldo(){const imgs={};for(const c of S.croquis){const d=await IDB.get(c.id);if(d)imgs[c.id]=d;}bajar('respaldo_activos_fijos_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(Object.assign({},S,{croquisImagenes:imgs})),'application/json');}
-function restaurar(ev){const file=ev.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const o=JSON.parse(rd.result);if(!Array.isArray(o.activos))throw 0;if(!confirm('Esto reemplazará la información actual. ¿Continuar?'))return;const imgs=o.croquisImagenes||{};delete o.croquisImagenes;S=Object.assign(vacio(),o);persistir();IDB.clear().then(()=>Promise.all(Object.entries(imgs).map(([k,v])=>IDB.put(k,v)))).then(()=>{alert('Respaldo restaurado.');ir('inicio');});}catch(e){alert('Archivo no válido.');}};rd.readAsText(file);ev.target.value='';}
+async function descargarRespaldo(){const imgs={};for(const c of S.croquis){const d=await IDB.get(c.id);if(d)imgs[c.id]=d;}for(const a of S.activos)for(const f of a.fotos||[]){const d=await IDB.get('foto:'+f.id);if(d)imgs['foto:'+f.id]=d;}bajar('respaldo_activos_fijos_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(Object.assign({},S,{imagenes:imgs})),'application/json');}
+function restaurar(ev){const file=ev.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const o=JSON.parse(rd.result);if(!Array.isArray(o.activos))throw 0;if(!confirm('Esto reemplazará la información actual. ¿Continuar?'))return;const imgs=Object.assign({},o.croquisImagenes,o.imagenes);delete o.croquisImagenes;delete o.imagenes;Object.keys(fotoCache).forEach(k=>delete fotoCache[k]);S=Object.assign(vacio(),o);persistir();IDB.clear().then(()=>Promise.all(Object.entries(imgs).map(([k,v])=>IDB.put(k,v)))).then(()=>{alert('Respaldo restaurado.');ir('inicio');});}catch(e){alert('Archivo no válido.');}};rd.readAsText(file);ev.target.value='';}
 function borrarTodo(){if(confirm('¿Borrar TODA la información de este navegador? Descargue antes un respaldo.')){S=vacio();persistir();IDB.clear();ir('inicio');}}
 function cargarEjemplo(){
   if(S.activos.length&&!confirm('Se agregarán activos de ejemplo (ficticios) a su registro. ¿Continuar?'))return;
@@ -983,7 +1052,7 @@ function cargarEjemplo(){
 }
 
 /* ===================== Arranque ===================== */
-nav();initForm();$('cq-stage').addEventListener('click',clicCroquis);
+nav();initForm();document.addEventListener('keydown',e=>{if(e.key==='Escape')$('lb').classList.add('hidden');});$('cq-stage').addEventListener('click',clicCroquis);
 $('d-ej').value=(S.config.ejercicios&&/^\d{4}/.test(S.config.ejercicios))?S.config.ejercicios.slice(0,4):new Date().getFullYear()-1;
 let t0='inicio';try{t0=localStorage.getItem(KEY+'.tab')||'inicio';}catch(e){}
 ir(TABS.some(t=>t[0]===t0)?t0:'inicio');

@@ -5,14 +5,14 @@ Herramienta web de un solo archivo (`index.html`) para llevar el control del inv
 ## Cómo abrirla
 1. Descargue `index.html`.
 2. Ábralo con doble clic en Chrome, Edge o Firefox. No requiere instalación ni internet.
-3. Los datos se guardan **solo en ese navegador** (los croquis, en su almacenamiento interno IndexedDB). Use la pestaña **Respaldo** para descargar un archivo JSON después de cada sesión; el respaldo incluye las imágenes de los croquis.
+3. Los datos se guardan **solo en ese navegador** (los croquis, en su almacenamiento interno IndexedDB). Use la pestaña **Respaldo** para descargar un archivo JSON después de cada sesión; el respaldo incluye las imágenes de los croquis y las fotografías de los activos.
 
 ## Módulos
 | Pestaña | Para qué sirve |
 |---|---|
 | Inicio | Indicadores y riesgos críticos. |
 | Configuración | Datos del contribuyente, orden de visita, saldo de balanza (conciliación) y topes de automóviles. |
-| Activos | Registro auxiliar: identificación, CFDI, MOI, inicio de uso, origen (nacional / importación definitiva / temporal IMMEX), ubicación, expediente documental y bajas. |
+| Activos | Registro auxiliar: identificación, CFDI, MOI, inicio de uso, origen (nacional / importación definitiva / temporal IMMEX), ubicación, expediente documental, **fotografías** (cámara del celular o archivo; vista general, placa, serie, etc.) y bajas. Botón **Ficha** para imprimir la ficha del activo con sus fotos. |
 | INPC | Captura de INPC oficial (no viene precargado para no usar datos sin verificar). |
 | Depreciación | Cédula de deducción de inversiones del ejercicio: meses completos, límite al MOI, factor de actualización (art. 31 LISR, art. 17-A CFF) y comparación contra lo declarado. |
 | Conteo físico | Hoja de inventario por ubicación, localizados / no localizados y bienes sobrantes. |
