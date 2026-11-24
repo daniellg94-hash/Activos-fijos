@@ -5,7 +5,7 @@ Herramienta web de un solo archivo (`index.html`) para llevar el control del inv
 ## Instalación con actualización automática (Windows, recomendado)
 1. Descargue `instalador/ACM_Activos_Fijos.cmd` y ábralo con doble clic. Si Windows muestra «Windows protegió su PC», elija **Más información → Ejecutar de todas formas**.
 2. Se instala en `%LOCALAPPDATA%\ACM\ActivosFijos` y crea en el Escritorio el acceso directo **«ACM Activos Fijos»** (reemplaza uno anterior con el mismo nombre; el viejo se guarda como `acceso_directo_anterior.lnk`).
-3. Cada vez que abra ese acceso directo, descarga la versión más reciente desde GitHub y la abre (en Chrome; si no está instalado, en Edge). Sin internet, abre la última copia descargada. Solo se descarga el programa: sus datos no se suben ni se descargan.
+3. Cada vez que abra ese acceso directo, descarga la versión más reciente del programa, del ícono y del propio lanzador desde GitHub y la abre (en Chrome; si no está instalado, en Edge). Sin internet, abre la última copia descargada. Solo se descarga el programa: sus datos no se suben ni se descargan.
 
 ## Cómo abrirla (manual)
 1. Descargue `index.html`.

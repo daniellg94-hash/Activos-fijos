@@ -1,1 +1,3 @@
-*.cmd text eol=crlf
+# Los .cmd se guardan con CRLF tal cual para que el lanzador descargado funcione en Windows
+*.cmd -text
+*.ico binary
