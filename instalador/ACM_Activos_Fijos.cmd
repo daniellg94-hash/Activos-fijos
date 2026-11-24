@@ -2,31 +2,45 @@
 rem ACM-LANZADOR
 rem ============================================================
 rem  ACM Activos Fijos - lanzador con actualizacion automatica
-rem  - Primera vez: se instala en %LOCALAPPDATA%\ACM\ActivosFijos y crea
-rem    en el Escritorio el acceso directo "ACM Activos Fijos" con su icono.
+rem  Se instala EN LA CARPETA DONDE SE COLOCA ESTE ARCHIVO, por ejemplo:
+rem    C:\Users\<usuario>\Desktop\ACM_ActivosFijos
+rem  - Crea ahi el acceso directo "ACM Activos Fijos" con su icono
+rem    (si ya existia uno que abria otro programa, lo conserva como
+rem    "ACM Activos Fijos (anterior)").
 rem  - Cada apertura: descarga desde GitHub la version mas reciente del
 rem    programa, del icono y de este lanzador, y abre la herramienta.
 rem    Sin internet abre la ultima copia local.
+rem  No modifica ningun otro archivo de la carpeta.
 rem  Los DATOS no se descargan ni se suben: se quedan en esta computadora.
 rem ============================================================
 setlocal
 title ACM Activos Fijos
-set "VERSION=2"
-set "APP=%LOCALAPPDATA%\ACM\ActivosFijos"
+set "VERSION=3"
+set "APP=%~dp0"
+set "APP=%APP:~0,-1%"
+set "LANZ=%~f0"
 set "HTML=%APP%\ACM_Activos_Fijos.html"
 set "ICO=%APP%\acm_activos_fijos.ico"
-set "LANZ=%APP%\ACM_Activos_Fijos.cmd"
 set "NUEVO=%APP%\lanzador.nuevo"
+set "OK=%APP%\acm_acceso_v%VERSION%.ok"
+set "VIEJO=%LOCALAPPDATA%\ACM\ActivosFijos"
 set "BASE1=https://raw.githubusercontent.com/daniellg94-hash/Activos-fijos/claude/inventario-activos-fijos-0e4oye"
 set "BASE2=https://raw.githubusercontent.com/daniellg94-hash/Activos-fijos/main"
 
-if not exist "%APP%" mkdir "%APP%"
-if /i "%~f0"=="%LANZ%" goto actualizar
-echo Instalando ACM Activos Fijos en %APP% ...
-copy /y "%~f0" "%LANZ%" >nul
-del /q "%APP%\acceso_v*.ok" >nul 2>&1
+if /i "%APP%"=="%USERPROFILE%\Downloads" (
+  echo.
+  echo Este archivo esta en la carpeta Descargas.
+  echo Copielo a la carpeta donde quiere instalar la herramienta, por ejemplo:
+  echo   %USERPROFILE%\Desktop\ACM_ActivosFijos
+  echo y ejecutelo desde ahi con doble clic.
+  echo.
+  pause
+  exit /b 1
+)
+rem El acceso directo va en la misma carpeta; en la instalacion anterior (AppData) iba en el Escritorio
+set "LNKDIR=%APP%"
+if /i "%APP%"=="%VIEJO%" for /f "usebackq delims=" %%D in (`powershell -NoProfile -Command "[Environment]::GetFolderPath('Desktop')"`) do set "LNKDIR=%%D"
 
-:actualizar
 echo Buscando la version mas reciente...
 call :bajar "/index.html" "%APP%\programa.nuevo" "ACM-ACTIVOS-FIJOS-APP" 20000
 if exist "%APP%\programa.nuevo" (
@@ -35,12 +49,11 @@ if exist "%APP%\programa.nuevo" (
 )
 call :bajar "/instalador/acm_activos_fijos.ico" "%APP%\icono.nuevo" "" 1000
 if exist "%APP%\icono.nuevo" (
-  fc /b "%APP%\icono.nuevo" "%ICO%" >nul 2>&1 && del /q "%APP%\icono.nuevo" || (move /y "%APP%\icono.nuevo" "%ICO%" >nul & del /q "%APP%\acceso_v*.ok" >nul 2>&1)
+  fc /b "%APP%\icono.nuevo" "%ICO%" >nul 2>&1 && del /q "%APP%\icono.nuevo" || (move /y "%APP%\icono.nuevo" "%ICO%" >nul & del /q "%OK%" >nul 2>&1)
 )
-if not exist "%APP%\acceso_v%VERSION%.ok" call :acceso
+if not exist "%OK%" call :acceso
 call :bajar "/instalador/ACM_Activos_Fijos.cmd" "%NUEVO%" "ACM-LANZADOR" 1000
 
-:abrir
 if not exist "%HTML%" (
   echo.
   echo No se pudo descargar la herramienta y no hay una copia local.
@@ -64,13 +77,15 @@ if exist "%NUEVO%" (
 )
 exit /b 0
 
-rem ---------- Crea o repara el acceso directo del Escritorio y refresca iconos ----------
+rem ---------- Crea o repara el acceso directo y refresca la cache de iconos ----------
 :acceso
-powershell -NoProfile -Command "$app=Join-Path $env:LOCALAPPDATA 'ACM\ActivosFijos'; $ico=Join-Path $app 'acm_activos_fijos.ico'; $d=[Environment]::GetFolderPath('Desktop'); $l=Join-Path $d 'ACM Activos Fijos.lnk'; $b=Join-Path $app 'acceso_directo_anterior.lnk'; if ((Test-Path $l) -and -not (Test-Path $b)) { Copy-Item $l $b -Force }; if (Test-Path $l) { Remove-Item $l -Force }; $s=(New-Object -ComObject WScript.Shell).CreateShortcut($l); $s.TargetPath=Join-Path $app 'ACM_Activos_Fijos.cmd'; $s.WorkingDirectory=$app; $s.WindowStyle=7; if (Test-Path $ico) { $s.IconLocation=$ico + ',0' } else { $s.IconLocation=$env:SystemRoot + '\System32\imageres.dll,109' }; $s.Description='Control de Activos Fijos (se actualiza solo)'; $s.Save()"
+powershell -NoProfile -Command "$sh=New-Object -ComObject WScript.Shell; $l=Join-Path $env:LNKDIR 'ACM Activos Fijos.lnk'; if (Test-Path $l) { $t=$sh.CreateShortcut($l).TargetPath; $b=Join-Path $env:LNKDIR 'ACM Activos Fijos (anterior).lnk'; if (($t -ne $env:LANZ) -and -not (Test-Path $b)) { Copy-Item $l $b -Force }; Remove-Item $l -Force }; $s=$sh.CreateShortcut($l); $s.TargetPath=$env:LANZ; $s.WorkingDirectory=$env:APP; $s.WindowStyle=7; if (Test-Path $env:ICO) { $s.IconLocation=$env:ICO + ',0' } else { $s.IconLocation=$env:SystemRoot + '\System32\imageres.dll,109' }; $s.Description='Control de Activos Fijos (se actualiza solo)'; $s.Save(); if ($env:LNKDIR -ne $env:VIEJO) { $d=Join-Path ([Environment]::GetFolderPath('Desktop')) 'ACM Activos Fijos.lnk'; $mio=Join-Path $env:VIEJO 'ACM_Activos_Fijos.cmd'; if ((Test-Path $d) -and ($d -ne $l) -and ($sh.CreateShortcut($d).TargetPath -eq $mio)) { Remove-Item $d -Force } }"
 ie4uinit.exe -show >nul 2>&1
 ie4uinit.exe -ClearIconCache >nul 2>&1
-echo listo>"%APP%\acceso_v%VERSION%.ok"
-echo Acceso directo "ACM Activos Fijos" actualizado en el Escritorio.
+del /q "%APP%\acm_acceso_v*.ok" >nul 2>&1
+echo listo>"%OK%"
+attrib +h "%OK%" >nul 2>&1
+echo Acceso directo "ACM Activos Fijos" actualizado en %LNKDIR%.
 exit /b 0
 
 rem ---------- Descarga: %1 ruta en el repositorio, %2 destino, %3 marca a validar, %4 tamano minimo ----------

@@ -3,8 +3,8 @@
 Herramienta web de un solo archivo (`index.html`) para llevar el control del inventario de activos fijos y prepararse para una visita domiciliaria del SAT enfocada en activos fijos.
 
 ## Instalación con actualización automática (Windows, recomendado)
-1. Descargue `instalador/ACM_Activos_Fijos.cmd` y ábralo con doble clic. Si Windows muestra «Windows protegió su PC», elija **Más información → Ejecutar de todas formas**.
-2. Se instala en `%LOCALAPPDATA%\ACM\ActivosFijos` y crea en el Escritorio el acceso directo **«ACM Activos Fijos»** (reemplaza uno anterior con el mismo nombre; el viejo se guarda como `acceso_directo_anterior.lnk`).
+1. Copie `instalador/ACM_Activos_Fijos.cmd` a la carpeta donde quiere la herramienta (por ejemplo `C:\Users\<usuario>\Desktop\ACM_ActivosFijos`) y ábralo con doble clic ahí. Si Windows muestra «Windows protegió su PC», elija **Más información → Ejecutar de todas formas**.
+2. En esa carpeta se crean `ACM_Activos_Fijos.html`, `acm_activos_fijos.ico` y el acceso directo **«ACM Activos Fijos»**. Si ya había un acceso directo con ese nombre que abría otro programa, se conserva como **«ACM Activos Fijos (anterior)»**. No se modifica ningún otro archivo de la carpeta.
 3. Cada vez que abra ese acceso directo, descarga la versión más reciente del programa, del ícono y del propio lanzador desde GitHub y la abre (en Chrome; si no está instalado, en Edge). Sin internet, abre la última copia descargada. Solo se descarga el programa: sus datos no se suben ni se descargan.
 
 ## Cómo abrirla (manual)
